@@ -711,7 +711,7 @@ class SalaryTelegramBot:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                 else:
-                    # Create comprehensive dashboard
+                    # Create comprehensivedashboard
                     response = f"""📊 **DASHBOARD - လစာခွဲခြမ်းစိတ်ဖြာမှု**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1163,7 +1163,7 @@ class SalaryTelegramBot:
 မည်သည့်ရွေးချယ်မှုကို လုပ်လိုပါသလဲ?"""
 
                 await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
-```python
+
             elif callback_data == "export_csv":
                 # Export to CSV with enhanced styling
                 try:
@@ -2216,6 +2216,7 @@ class SalaryTelegramBot:
 
     def run(self):
         """Run the bot."""
+```python
         logger.info("Starting Salary Calculator Telegram Bot...")
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)
 
