@@ -712,6 +712,7 @@ class SalaryTelegramBot:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                 else:
                     # Create comprehensive dashboard
+                    ```python
                     response = f"""📊 **DASHBOARD - လစာခွဲခြမ်းစိတ်ဖြာမှု**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1508,7 +1509,7 @@ class SalaryTelegramBot:
                         )
 
                     # Clean up file
-                    os.remove(filename)
+                    os.remove(filename)```python
                 else:
                     response = "❌ အစီရင်ခံစာ ပြုလုပ်ရန် ဒေတာ မတွေ့ပါ"
                     await query.edit_message_text(response, parse_mode='Markdown')
@@ -1810,7 +1811,7 @@ class SalaryTelegramBot:
                 # Show manual input for specific shift
                 shift_type = "Day" if callback_data == "day_shift_manual" else "Night"
                 start_time = "06:20" if shift_type == "Day" else "16:35"
-                
+
                 response = f"""⌨️ **{shift_type} Shift - အပြီးချိန်ကိုယ်တိုင်ရေး**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2080,97 +2081,7 @@ class SalaryTelegramBot:
             logger.error(f"Error handling preset time: {e}")
             await query.edit_message_text("❌ **အချိန်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**", parse_mode='Markdown')
 
-    async def handle_time_set_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
-        """Handle time setting commands with AM/PM format."""
-        user_id = str(update.effective_user.id)
-        keyboard = self.get_main_keyboard()
-        response = ""  # Initialize response variable
-
-        try:
-            # Parse command: "Set 08:30 AM To 05:30 PM"
-            user_input = user_input.replace("Set ", "").strip()
-
-            # Handle shift codes
-            if user_input.upper() in ["C341"]:
-                start_time_str = "08:30"
-                end_time_str = "17:30"
-            elif user_input.upper() in ["C342"]:
-                start_time_str = "16:45"
-                end_time_str = "01:25"
-            else:
-                # Parse AM/PM or 24-hour format
-                if " To " in user_input:
-                    start_part, end_part = user_input.split(" To ")
-                    start_time_str = self.convert_ampm_to_24h(start_part.strip())
-                    end_time_str = self.convert_ampm_to_24h(end_part.strip())
-
-                    if not start_time_str or not end_time_str:
-                        response = """❌ **အချိန်ပုံစံမှားနေပါသည်**
-
-💡 **မှန်ကန်သောပုံစံများ:**
-• `Set 08:30 AM To 05:30 PM`
-• `Set 16:35 To 02:50` (Night Shift)
-• `Set C341` သို့မဟုတ် `Set C342`
-
-ဥပမာ: `Set 09:00 AM To 06:00 PM`"""
-                        await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-                        return
-                else:
-                    response = """❌ **ပုံစံမှားနေပါသည်**
-
-💡 **မှန်ကန်သောပုံစံ:**
-`Set [Start Time] To [End Time]`
-
-🌙 **Night Shift ဥပမာ:** `Set 16:35 To 02:50`
-🌅 **Day Shift ဥပမာ:** `Set 08:30 To 17:30`"""
-                    await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-                    return
-
-            # Calculate salary using the parsed times
-            result = self.calculator.calculate_salary(start_time_str, end_time_str)
-
-            if result['error']:
-                response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
-                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-                return
-
-            # Save calculation data
-            calculation_saved = self.storage.save_calculation(user_id, result)
-
-            # Format response in Burmese
-            formatted_response = self.formatter.format_salary_response(result)
-
-            # Detect if this is night shift (crosses midnight)
-            try:
-                from datetime import datetime
-                start_dt = datetime.strptime(start_time_str, "%H:%M")
-                end_dt = datetime.strptime(end_time_str, "%H:%M")
-                
-                is_night_shift = (start_dt.hour >= 16) or (end_dt.hour <= 8)
-                shift_type = "Night Shift" if is_night_shift else "Day Shift"
-            except:
-                shift_type = "Work Shift"
-
-            # Add set time confirmation with night shift note
-            night_note = ""
-            if is_night_shift and result.get('night_ot_minutes', 0) > 0:
-                night_note = "\n🌙 **Night Shift သတိ**: နောက်နေ့ရောက်သောကြောင့် OT အားလုံး ¥2,625/နာရီ နှုন်းဖြင့် တွက်ချက်ပြီး"
-
-            response = f"""✅ **{shift_type} အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{formatted_response}{night_note}
-
-💡 **နောက်တစ်ကြိမ် Set လုပ်ရန်** ⏰ အချိန်သတ်မှတ် ခလုတ်ကို နှိပ်ပါ"""
-
-            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-
-        except Exception as e:
-            logger.error(f"Error handling time set command: {e}")
-            response = "❌ **အချိန်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
-            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-
+    
     async def handle_shift_calculation(self, query, context: ContextTypes.DEFAULT_TYPE, start_time: str, end_time: str, shift_name: str) -> None:
         """Handle shift calculation with fixed start time."""
         user_id = str(query.from_user.id)

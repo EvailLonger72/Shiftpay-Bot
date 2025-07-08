@@ -31,11 +31,16 @@ class TimeUtils:
                         pass
 
             # Fallback: try original parsing
-            time_obj = datetime.strptime(time_str, "%H:%M")
-            today = datetime.now().date()
-            return datetime.combine(today, time_obj.time())
+            try:
+                time_obj = datetime.strptime(time_str, "%H:%M")
+                today = datetime.now().date()
+                return datetime.combine(today, time_obj.time())
+            except ValueError:
+                pass
 
-        except ValueError:
+            return None
+
+        except Exception:
             return None
 
     def calculate_total_minutes(self, start_time: datetime, end_time: datetime) -> int:
