@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from salary_calculator import SalaryCalculator
 from burmese_formatter import BurmeseFormatter
@@ -36,6 +36,28 @@ class SalaryTelegramBot:
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_time_input))
         self.application.add_handler(CallbackQueryHandler(self.handle_button_callback))
     
+    def get_main_keyboard(self):
+        """Create the main reply keyboard."""
+        keyboard = [
+            [
+                KeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု"),
+                KeyboardButton("📈 ဂရပ်ပြမှု")
+            ],
+            [
+                KeyboardButton("📋 မှတ်တမ်း"),
+                KeyboardButton("🎯 ပန်းတိုင်")
+            ],
+            [
+                KeyboardButton("📤 ပို့မှု"),
+                KeyboardButton("🔔 သတိပေးချက်")
+            ],
+            [
+                KeyboardButton("🗑️ ဒေတာဖျက်မှု"),
+                KeyboardButton("ℹ️ အကူအညီ")
+            ]
+        ]
+        return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Send a message when the command /start is issued."""
         welcome_message = """🤖 **လစာတွက်ချက်စက်ရုံ**
@@ -55,9 +77,11 @@ class SalaryTelegramBot:
 - OT: ¥2,100/နာရီ
 - ညဖက် OT: ¥2,625/နာရီ
 
+📱 **အောက်မှ ခလုတ်များကို နှိပ်၍ လုပ်ဆောင်နိုင်ပါသည်**
 /help ကို နှိပ်ပြီး အသေးစိတ်ကြည့်ရှုပါ။"""
         
-        await update.message.reply_text(welcome_message, parse_mode='Markdown')
+        keyboard = self.get_main_keyboard()
+        await update.message.reply_text(welcome_message, parse_mode='Markdown', reply_markup=keyboard)
     
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Send help message."""
@@ -89,7 +113,8 @@ Break များ:
 - ကျော်လွန်ရင် = OT
 - 22:00 နောက်ပိုင်း = Night OT"""
         
-        await update.message.reply_text(help_message, parse_mode='Markdown')
+        keyboard = self.get_main_keyboard()
+        await update.message.reply_text(help_message, parse_mode='Markdown', reply_markup=keyboard)
     
     async def handle_time_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle time input from user."""
@@ -99,6 +124,13 @@ Break များ:
                 return
             
             user_input = update.message.text.strip()
+            user_id = str(update.effective_user.id)
+            
+            # Handle keyboard button presses
+            if user_input in ["📊 ခွဲခြမ်းစိတ်ဖြာမှု", "📈 ဂရပ်ပြမှု", "📋 မှတ်တမ်း", "🎯 ပန်းတိုင်", 
+                             "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ"]:
+                await self.handle_keyboard_button(update, context, user_input)
+                return
             
             # Parse time input
             if '~' not in user_input:
@@ -143,12 +175,221 @@ Break များ:
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
-            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+            keyboard = self.get_main_keyboard()
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
             
         except Exception as e:
             logger.error(f"Error processing time input: {e}")
             if update.message:
-                await update.message.reply_text("❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။", parse_mode='Markdown')
+                keyboard = self.get_main_keyboard()
+                await update.message.reply_text("❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။", parse_mode='Markdown', reply_markup=keyboard)
+    
+    async def handle_keyboard_button(self, update: Update, context: ContextTypes.DEFAULT_TYPE, button_text: str) -> None:
+        """Handle keyboard button presses."""
+        user_id = str(update.effective_user.id)
+        keyboard = self.get_main_keyboard()
+        
+        try:
+            if button_text == "📊 ခွဲခြမ်းစိတ်ဖြာမှု":
+                # Generate summary statistics
+                stats = self.analytics.generate_summary_stats(user_id, 30)
+                
+                if stats.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{stats['error']}"
+                else:
+                    response = f"""📊 **လစာခွဲခြမ်းစိတ်ဖြာမှု (နောက်ဆုံး ၃၀ ရက်)**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **စုစုပေါင်းအလုပ်လုပ်ရက်:** {stats['total_days']} ရက်
+
+⏰ **စုစုပေါင်းအလုပ်ချိန်:** {stats['total_work_hours']} နာရီ
+   🟢 ပုံမှန်နာရီ: {stats['total_regular_hours']} နာရီ
+   🔵 OT နာရီ: {stats['total_ot_hours']} နာရီ
+
+💰 **စုစုပေါင်းလစာ:** ¥{stats['total_salary']:,.0f}
+
+📈 **နေ့စဉ်ပျမ်းမျှ:**
+   ⏰ အလုပ်ချိန်: {stats['avg_daily_hours']} နာရီ
+   💰 လစာ: ¥{stats['avg_daily_salary']:,.0f}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "📈 ဂရပ်ပြမှု":
+                # Generate bar charts
+                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
+                
+                if chart_data.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{chart_data['error']}"
+                else:
+                    # Create hours chart
+                    hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
+                    salary_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'salary')
+                    
+                    response = f"""📈 **နောက်ဆုံး ၁၄ ရက် ဂရပ်**
+
+{hours_chart}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{salary_chart}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "📋 မှတ်တမ်း":
+                # Show recent history
+                history_data = self.analytics.get_recent_history(user_id, 7)
+                
+                if history_data.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{history_data['error']}"
+                else:
+                    response = "📋 **နောက်ဆုံး ၇ ရက် မှတ်တမ်း**\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                    
+                    for day in history_data['history']:
+                        response += f"📅 **{day['date']}**\n"
+                        response += f"⏰ {day['hours']}နာရီ (OT: {day['ot_hours']}နာရီ)\n"
+                        response += f"💰 ¥{day['salary']:,.0f}\n"
+                        response += f"🕒 {day['shifts']}\n\n"
+                    
+                    response += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "🎯 ပန်းတိုင်":
+                # Show goal progress
+                progress = self.goal_tracker.check_goal_progress(user_id, 'monthly')
+                
+                if progress.get('error'):
+                    response = f"""🎯 **ပန်းတိုင်စီမံခန့်ခွဲမှု**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ **အမှားရှိသည်:** {progress['error']}
+
+💡 **အကြံပြုချက်:**
+လစဉ်လစာပန်းတိုင် သတ်မှတ်ရန် စာတိုပေးပို့ပါ:
+`ပန်းတိုင် 300000` (လစာအတွက်)
+`ချိန်ပန်းတိုင် 180` (အလုပ်ချိန်အတွက်)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = f"""🎯 **လစဉ်ပန်းတိုင်တိုးတက်မှု**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **လ:** {progress['month']}
+📊 **အလုပ်လုပ်ရက်:** {progress['days_worked']} ရက်
+
+"""
+                    
+                    for goal_type, goal_data in progress.get('progress', {}).items():
+                        if goal_type == 'salary':
+                            response += f"""💰 **လစာပန်းတိုင်:**
+   🎯 ပန်းတိုင်: ¥{goal_data['target']:,.0f}
+   💵 လက်ရှိ: ¥{goal_data['current']:,.0f}
+   📈 တိုးတက်မှု: {goal_data['progress_percent']:.1f}%
+   🔄 ကျန်: ¥{goal_data['remaining']:,.0f}
+
+"""
+                        elif goal_type == 'hours':
+                            response += f"""⏰ **အလုပ်ချိန်ပန်းတိုင်:**
+   🎯 ပန်းတိုင်: {goal_data['target']} နာရီ
+   ⏱️ လက်ရှိ: {goal_data['current']:.1f} နာရီ
+   📈 တိုးတက်မှု: {goal_data['progress_percent']:.1f}%
+   🔄 ကျန်: {goal_data['remaining']:.1f} နာရီ
+
+"""
+                    
+                    response += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "📤 ပို့မှု":
+                # Show export options
+                export_summary = self.export_manager.get_export_summary(user_id, 30)
+                
+                if export_summary.get('error'):
+                    response = f"""📤 **ဒေတာပို့မှုမီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ **အမှားရှိသည်:** {export_summary['error']}
+
+💡 **အကြံပြုချက်:**
+ပထမဆုံး အလုပ်ချိန်မှတ်သားပြီးမှ ပို့မှုလုပ်ပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = f"""📤 **ဒေတာပို့မှုမီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 **ပို့နိုင်သောဒေတာ:**
+- မှတ်တမ်းအရေအတွက်: {export_summary['total_records']}
+- ရက်သတ္တပတ်အရေအတွက်: {export_summary['total_days']}
+- ကာလ: {export_summary['date_range']['start']} မှ {export_summary['date_range']['end']}
+
+💡 **ပို့မှုလုပ်ရန်:**
+`CSV ပို့မယ်` သို့မဟုတ် `JSON ပို့မယ်` ရေးပေးပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "🔔 သတိပေးချက်":
+                # Show notifications and streak info
+                streak_info = self.notification_manager.get_streak_info(user_id)
+                alert_info = self.notification_manager.generate_work_summary_alert(user_id)
+                
+                response = f"""🔔 **သတိပေးချက်မီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔥 **အလုပ်ဆက်တိုက်ရက်ရေ:**
+- လက်ရှိ: {streak_info.get('current_streak', 0)} ရက်
+- အမြင့်ဆုံး: {streak_info.get('longest_streak', 0)} ရက်
+
+⚠️ **စွမ်းအားအခြေအနေ:**"""
+                
+                if alert_info.get('alert'):
+                    response += f"\n{alert_info['message']}"
+                else:
+                    response += f"\n✅ {alert_info.get('message', 'ကောင်းမွန်နေပါသည်')}"
+                
+                response += f"""
+
+💡 **သတိပေးချက်သတ်မှတ်ရန်:**
+`သတိပေး 08:00` ရေးပြီး နေ့စဉ်သတိပေးချက်ခံရန်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "🗑️ ဒေတာဖျက်မှု":
+                response = """🗑️ **ဒေတာဖျက်မှုမီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ **သတိပေးချက်:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
+
+💡 **ဖျက်ရန်:**
+`အားလုံးဖျက်မယ်` ရေးပြီးပေးပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "ℹ️ အကူအညီ":
+                await self.help(update, context)
+            
+        except Exception as e:
+            logger.error(f"Error handling keyboard button: {e}")
+            response = "❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
     
     async def handle_button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle button callbacks for analysis features."""
