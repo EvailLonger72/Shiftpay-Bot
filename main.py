@@ -1,10 +1,12 @@
 import os
 import logging
 from datetime import datetime
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from salary_calculator import SalaryCalculator
 from burmese_formatter import BurmeseFormatter
+from data_storage import DataStorage
+from analytics import Analytics
 
 # Configure logging
 logging.basicConfig(
@@ -18,12 +20,15 @@ class SalaryTelegramBot:
         self.token = token
         self.calculator = SalaryCalculator()
         self.formatter = BurmeseFormatter()
+        self.storage = DataStorage()
+        self.analytics = Analytics()
         self.application = Application.builder().token(token).build()
         
         # Add handlers
         self.application.add_handler(CommandHandler("start", self.start))
         self.application.add_handler(CommandHandler("help", self.help))
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_time_input))
+        self.application.add_handler(CallbackQueryHandler(self.handle_button_callback))
     
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Send a message when the command /start is issued."""
@@ -105,15 +110,149 @@ Break များ:
                 await update.message.reply_text(f"❌ **အမှားရှိသည်**\n\n{result['error']}", parse_mode='Markdown')
                 return
             
+            # Save calculation data
+            user_id = str(update.effective_user.id)
+            self.storage.save_calculation(user_id, result)
+            
             # Format response in Burmese
             response = self.formatter.format_salary_response(result)
             
-            await update.message.reply_text(response, parse_mode='Markdown')
+            # Create inline keyboard with analysis buttons
+            keyboard = [
+                [
+                    InlineKeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု", callback_data="analysis"),
+                    InlineKeyboardButton("📈 ဂရပ်ပြမှု", callback_data="charts")
+                ],
+                [
+                    InlineKeyboardButton("📋 မှတ်တမ်း", callback_data="history"),
+                    InlineKeyboardButton("🗑️ ဒေတာဖျက်မှု", callback_data="delete_menu")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=reply_markup)
             
         except Exception as e:
             logger.error(f"Error processing time input: {e}")
             if update.message:
                 await update.message.reply_text("❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။", parse_mode='Markdown')
+    
+    async def handle_button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle button callbacks for analysis features."""
+        query = update.callback_query
+        await query.answer()
+        
+        user_id = str(update.effective_user.id)
+        callback_data = query.data
+        
+        try:
+            if callback_data == "analysis":
+                # Generate summary statistics
+                stats = self.analytics.generate_summary_stats(user_id, 30)
+                
+                if stats.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{stats['error']}"
+                else:
+                    response = f"""📊 **လစာခွဲခြမ်းစိတ်ဖြာမှု (နောက်ဆုံး ၃၀ ရက်)**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **စုစုပေါင်းအလုပ်လုပ်ရက်:** {stats['total_days']} ရက်
+
+⏰ **စုစုပေါင်းအလုပ်ချိန်:** {stats['total_work_hours']} နာရီ
+   🟢 ပုံမှန်နာရီ: {stats['total_regular_hours']} နာရီ
+   🔵 OT နာရီ: {stats['total_ot_hours']} နာရီ
+
+💰 **စုစုပေါင်းလစာ:** ¥{stats['total_salary']:,.0f}
+
+📈 **နေ့စဉ်ပျမ်းမျှ:**
+   ⏰ အလုပ်ချိန်: {stats['avg_daily_hours']} နာရီ
+   💰 လစာ: ¥{stats['avg_daily_salary']:,.0f}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "charts":
+                # Generate bar charts
+                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
+                
+                if chart_data.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{chart_data['error']}"
+                else:
+                    # Create hours chart
+                    hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
+                    salary_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'salary')
+                    
+                    response = f"""📈 **နောက်ဆုံး ၁၄ ရက် ဂရပ်**
+
+{hours_chart}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{salary_chart}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "history":
+                # Show recent history
+                history_data = self.analytics.get_recent_history(user_id, 7)
+                
+                if history_data.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{history_data['error']}"
+                else:
+                    response = "📋 **နောက်ဆုံး ၇ ရက် မှတ်တမ်း**\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                    
+                    for day in history_data['history']:
+                        response += f"📅 **{day['date']}**\n"
+                        response += f"⏰ {day['hours']}နာရီ (OT: {day['ot_hours']}နာရီ)\n"
+                        response += f"💰 ¥{day['salary']:,.0f}\n"
+                        response += f"🕒 {day['shifts']}\n\n"
+                    
+                    response += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "delete_menu":
+                # Show delete options
+                keyboard = [
+                    [InlineKeyboardButton("🗑️ အားလုံးဖျက်မည်", callback_data="delete_all")],
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="back_to_main")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                response = """🗑️ **ဒေတာဖျက်မှုမီနူး**
+
+⚠️ **သတိပေးချက်:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+မည်သည့်အရာကို ဖျက်လိုပါသလဲ?"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+            
+            elif callback_data == "delete_all":
+                # Delete all user data
+                success = self.storage.delete_user_data(user_id)
+                
+                if success:
+                    response = "✅ **ဖျက်မှုအောင်မြင်သည်**\n\nသင့်ဒေတာအားလုံး ဖျက်ပြီးပါပြီ။"
+                else:
+                    response = "❌ **ဖျက်မှုမအောင်မြင်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "back_to_main":
+                # Go back to main menu (just show a simple message)
+                response = "🏠 **ပင်မစာမျက်နှာ**\n\nအချိန်ပေးပို့ပြီး လစာတွက်ချက်ပါ (ဥပမာ: 08:30 ~ 17:30)"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+        
+        except Exception as e:
+            logger.error(f"Error handling button callback: {e}")
+            await query.edit_message_text("❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။", parse_mode='Markdown')
     
     def run(self):
         """Run the bot."""
