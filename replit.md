@@ -17,6 +17,7 @@ This is a comprehensive Telegram bot that calculates daily salary for factory wo
 - **Export Manager**: CSV/JSON data export functionality
 - **Goal Tracker**: Monthly/weekly goal setting and progress tracking
 - **Notification Manager**: Work reminders and performance alerts
+- **Calendar Manager**: Event scheduling and salary payment date tracking
 
 ### Technology Stack
 - **Backend**: Python with python-telegram-bot library
@@ -122,6 +123,10 @@ This is a comprehensive Telegram bot that calculates daily salary for factory wo
 ✓ Created performance alerts and missing day detection
 ✓ Built personalized goal recommendations system
 ✓ Added monthly/weekly goal progress tracking
+✓ Implemented calendar functionality with event scheduling
+✓ Added salary payment date tracking (default 25th each month)
+✓ Created custom keyboard with 10 persistent buttons
+✓ Enhanced UI with calendar and salary date management
 
 ## Key Features Implemented
 - Automatic shift detection (C341 Day/C342 Night)
@@ -143,6 +148,9 @@ This is a comprehensive Telegram bot that calculates daily salary for factory wo
 - **📅 Missing work day detection with gap analysis**
 - **💡 Personalized goal recommendations based on history**
 - **📊 Advanced monthly reports with detailed breakdowns**
+- **📅 Calendar system with event scheduling and reminders**
+- **💰 Salary payment date tracking and work schedule suggestions**
+- **⌨️ Custom keyboard interface with persistent buttons below text input**
 
 ## User Preferences
 

@@ -10,6 +10,7 @@ from analytics import Analytics
 from export_manager import ExportManager
 from notifications import NotificationManager
 from goal_tracker import GoalTracker
+from calendar_manager import CalendarManager
 
 # Configure logging
 logging.basicConfig(
@@ -28,6 +29,7 @@ class SalaryTelegramBot:
         self.export_manager = ExportManager()
         self.notification_manager = NotificationManager()
         self.goal_tracker = GoalTracker()
+        self.calendar_manager = CalendarManager()
         self.application = Application.builder().token(token).build()
         
         # Add handlers
@@ -46,6 +48,10 @@ class SalaryTelegramBot:
             [
                 KeyboardButton("📋 မှတ်တမ်း"),
                 KeyboardButton("🎯 ပန်းတိုင်")
+            ],
+            [
+                KeyboardButton("📅 ပြက္ခဒိန်"),
+                KeyboardButton("💰 လစာရက်")
             ],
             [
                 KeyboardButton("📤 ပို့မှု"),
@@ -128,8 +134,16 @@ Break များ:
             
             # Handle keyboard button presses
             if user_input in ["📊 ခွဲခြမ်းစိတ်ဖြာမှု", "📈 ဂရပ်ပြမှု", "📋 မှတ်တမ်း", "🎯 ပန်းတိုင်", 
-                             "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ"]:
+                             "📅 ပြက္ခဒိန်", "💰 လစာရက်", "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ"]:
                 await self.handle_keyboard_button(update, context, user_input)
+                return
+            
+            # Handle calendar and schedule commands
+            if user_input.startswith("ပွဲ "):
+                await self.handle_calendar_command(update, context, user_input)
+                return
+            elif user_input.startswith("လစာရက် "):
+                await self.handle_salary_date_command(update, context, user_input)
                 return
             
             # Parse time input
@@ -383,12 +397,89 @@ Break များ:
                 
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
             
+            elif button_text == "📅 ပြက္ခဒိန်":
+                # Show calendar and upcoming events
+                events = self.calendar_manager.get_user_events(user_id, 30)
+                today_events = self.calendar_manager.get_today_events(user_id)
+                
+                if events.get('error'):
+                    response = f"""📅 **ပြက္ခဒိန်မီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 **ယနေ့ ({today_events['burmese_date']}):** {today_events['total']} ပွဲအစီအစဉ်
+
+📊 **နောက်လာမည့်ပွဲများ:** {events.get('error', 'မရှိပါ')}
+
+💡 **ပွဲအစီအစဉ်ထည့်ရန်:**
+`ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ` ပုံစံဖြင့် ရေးပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = f"""📅 **ပြက္ခဒိန်မီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 **ယနေ့ ({today_events['burmese_date']}):** {today_events['total']} ပွဲအစီအစဉ်
+
+📊 **နောက်လာမည့်ပွဲများ ({events['period']}):**
+"""
+                    
+                    if events['events']:
+                        for event in events['events'][:10]:  # Show first 10 events
+                            days_text = "ယနေ့" if event['days_until'] == 0 else f"{event['days_until']} ရက်နောက်"
+                            response += f"• {event['burmese_date']} ({days_text})\n  📝 {event['description']}\n\n"
+                    else:
+                        response += "မရှိပါ\n\n"
+                    
+                    response += f"""💡 **ပွဲအစီအစဉ်ထည့်ရန်:**
+`ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ` ပုံစံဖြင့် ရေးပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+            elif button_text == "💰 လစာရက်":
+                # Show salary payment information
+                payment_info = self.calendar_manager.get_next_salary_payment_date()
+                schedule_suggestions = self.calendar_manager.get_work_schedule_suggestions(user_id)
+                
+                response = f"""💰 **လစာထုတ်ရက်အချက်အလက်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **နောက်လာမည့်လစာရက်:** {payment_info['burmese_date']}
+🗓️ **ကျန်ရက်:** {payment_info['days_until']} ရက်
+📊 **လစာထုတ်ရက်:** လတိုင်း {payment_info['payment_day']} ရက်
+
+"""
+                
+                if schedule_suggestions.get('error'):
+                    response += f"📈 **အလုပ်အကြံပြုချက်:** {schedule_suggestions['error']}"
+                else:
+                    if schedule_suggestions.get('suggestion'):
+                        response += f"""📈 **အလုပ်အကြံပြုချက်:**
+💵 လက်ရှိလစာ: ¥{schedule_suggestions['current_month_total']:,.0f}
+🎯 ပန်းတိုင်: ¥{schedule_suggestions['target_monthly']:,.0f}
+📊 {schedule_suggestions['suggestion']}"""
+                    else:
+                        response += f"🎉 {schedule_suggestions.get('message', 'လစာရက်ရောက်ပြီ!')}"
+                
+                response += f"""
+
+💡 **လစာရက်ပြောင်းရန်:**
+`လစာရက် 30` ရေးပြီး ၃၀ ရက်အဖြစ် ပြောင်းပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
             elif button_text == "ℹ️ အကူအညီ":
                 await self.help(update, context)
             
         except Exception as e:
             logger.error(f"Error handling keyboard button: {e}")
-            response = "❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
+            response = "❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ។"
             await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
     
     async def handle_button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -726,6 +817,79 @@ Break များ:
             logger.error(f"Error handling button callback: {e}")
             await query.edit_message_text("❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။", parse_mode='Markdown')
     
+    async def handle_calendar_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
+        """Handle calendar event commands."""
+        user_id = str(update.effective_user.id)
+        keyboard = self.get_main_keyboard()
+        
+        try:
+            # Parse command: "ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ"
+            parts = user_input.split(' ', 2)
+            if len(parts) < 3:
+                response = """❌ **ပုံစံမှားနေပါသည်**
+
+💡 **မှန်ကန်သောပုံစံ:**
+`ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ`
+
+ဥပမာ: `ပွဲ 2025-07-25 လစာထုတ်ရက်`"""
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                return
+            
+            event_date = parts[1]
+            description = parts[2]
+            
+            result = self.calendar_manager.add_user_event(user_id, event_date, "custom", description)
+            
+            if result.get('error'):
+                response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+            else:
+                response = f"✅ **ပွဲအစီအစဉ်ထည့်ပြီးပါပြီ**\n\n{result['message']}"
+            
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+        except Exception as e:
+            logger.error(f"Error handling calendar command: {e}")
+            response = "❌ **ပွဲအစီအစဉ်ထည့်ရာတွင် အမှားရှိခဲ့သည်**"
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+    
+    async def handle_salary_date_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
+        """Handle salary date commands."""
+        keyboard = self.get_main_keyboard()
+        
+        try:
+            # Parse command: "လစာရက် 25"
+            parts = user_input.split(' ')
+            if len(parts) < 2:
+                response = """❌ **ပုံစံမှားနေပါသည်**
+
+💡 **မှန်ကန်သောပုံစံ:**
+`လစာရက် 25`
+
+ဥပမာ: `လစာရက် 30` (လတိုင်း ၃၀ ရက်)"""
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                return
+            
+            try:
+                day = int(parts[1])
+            except ValueError:
+                response = "❌ **ရက်သတ္တပတ်သည် နံပါတ်ဖြစ်ရမည်**\n\nဥပမာ: `လစာရက် 25`"
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                return
+            
+            result = self.calendar_manager.set_salary_payment_day(day)
+            
+            if result.get('error'):
+                response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+            else:
+                response = f"✅ **လစာရက်သတ်မှတ်ပြီးပါပြီ**\n\n{result['message']}"
+            
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+            
+        except Exception as e:
+            logger.error(f"Error handling salary date command: {e}")
+            response = "❌ **လစာရက်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
     def run(self):
         """Run the bot."""
         logger.info("Starting Salary Calculator Telegram Bot...")
