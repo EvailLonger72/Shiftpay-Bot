@@ -83,6 +83,10 @@ Break များ:
     async def handle_time_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle time input from user."""
         try:
+            # Check if message exists
+            if not update.message or not update.message.text:
+                return
+            
             user_input = update.message.text.strip()
             
             # Parse time input
@@ -108,7 +112,8 @@ Break များ:
             
         except Exception as e:
             logger.error(f"Error processing time input: {e}")
-            await update.message.reply_text("❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။", parse_mode='Markdown')
+            if update.message:
+                await update.message.reply_text("❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။", parse_mode='Markdown')
     
     def run(self):
         """Run the bot."""
