@@ -1,22 +1,3 @@
 {
-  "1867166899": {
-    "2025-07-08": [
-      {
-        "timestamp": "2025-07-08T18:18:39.599784",
-        "start_time": "17:35",
-        "end_time": "02:50",
-        "shift_type": "C342",
-        "total_minutes": 555,
-        "break_minutes": 65,
-        "paid_minutes": 490,
-        "regular_minutes": 455,
-        "ot_minutes": 35,
-        "night_ot_minutes": 0,
-        "regular_salary": 15925.0,
-        "ot_salary": 1225.0,
-        "night_ot_salary": 0.0,
-        "total_salary": 17150.0
-      }
-    ]
-  }
+  "1867166899": {}
 }
