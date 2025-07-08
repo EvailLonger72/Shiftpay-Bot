@@ -403,7 +403,7 @@ class SalaryTelegramBot:
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
             elif button_text == "📤 ပို့မှု":
-                # Show export options
+                # Show export options with inline buttons
                 export_summary = self.export_manager.get_export_summary(user_id, 30)
 
                 if export_summary.get('error'):
@@ -417,6 +417,8 @@ class SalaryTelegramBot:
 ပထမဆုံး အလုပ်ချိန်မှတ်သားပြီးမှ ပို့မှုလုပ်ပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                    
+                    await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
                 else:
                     response = f"""📤 **ဒေတာပို့မှုမီနူး**
 
@@ -427,12 +429,24 @@ class SalaryTelegramBot:
 - ရက်သတ္တပတ်အရေအတွက်: {export_summary['total_days']}
 - ကာလ: {export_summary['date_range']['start']} မှ {export_summary['date_range']['end']}
 
-💡 **ပို့မှုလုပ်ရန်:**
-`CSV ပို့မယ်` သို့မဟုတ် `JSON ပို့မယ်` ရေးပေးပါ
+💡 **အောက်မှ option များရွေးချယ်ပါ:**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
-                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                    # Create export buttons
+                    export_keyboard = [
+                        [
+                            InlineKeyboardButton("📊 CSV ဖိုင်ပို့မှု", callback_data="export_csv_direct"),
+                            InlineKeyboardButton("📄 JSON ဖိုင်ပို့မှု", callback_data="export_json_direct")
+                        ],
+                        [
+                            InlineKeyboardButton("📅 လစဉ်အစီရင်ခံစာ", callback_data="monthly_report"),
+                            InlineKeyboardButton("📈 ခွဲခြမ်းစိတ်ဖြာမှုပါ Export", callback_data="export_with_analytics")
+                        ]
+                    ]
+                    export_reply_markup = InlineKeyboardMarkup(export_keyboard)
+                    
+                    await update.message.reply_text(response, parse_mode='Markdown', reply_markup=export_reply_markup)
 
             elif button_text == "🔔 သတိပေးချက်":
                 # Show notifications and streak info
@@ -464,27 +478,49 @@ class SalaryTelegramBot:
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
             elif button_text == "🗑️ ဒေတာဖျက်မှု":
-                response = """🗑️ **ဒေတာဖျက်မှုဌာန**
+                # Get user data summary for display
+                user_data_summary = self.storage.get_user_data_summary(user_id)
+
+                response = f"""🗑️ **ဒေတာဖျက်မှုဌာန**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 **လက်ရှိဒေတာအခြေအနေ:**
+• 📋 လုပ်ငန်းမှတ်တမ်း: {user_data_summary.get('total_records', 0)} ရေကောင်
+• 🗓️ အလုပ်လုပ်ရက်: {user_data_summary.get('total_days', 0)} ရက်
+• 🎯 သတ်မှတ်ပန်းတိုင်: {user_data_summary.get('active_goals', 0)} ခု
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ⚠️ **အရေးကြီးသတိပေးချက်** ⚠️
 
-🔴 **သတိ:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
-🔴 **သတိ:** လုပ်ငန်းမှတ်တမ်းအားလုံး ပျောက်သွားမည်
-🔴 **သတိ:** ဤလုပ်ဆောင်ချက်ကို ပြန်ပြေးမရပါ
+🔒 **လုံခြုံမှု:** Export လုပ်ပြီးမှ ဖျက်ရန် အကြံပြုပါသည်
+🔄 **ရွေးချယ်မှု:** တစ်စိတ်တစ်ပိုင်း သို့မဟုတ် အားလုံးဖျက်နိုင်
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💾 **အကြံပြုချက်:**
-Export လုပ်ပြီးမှ ဖျက်သင့်ပါသလား?
+မည်သည့်ရွေးချယ်မှုကို လုပ်လိုပါသလဲ?"""
 
-💡 **ဖျက်ရန်နည်းလမ်း:**
-`အားလုံးဖျက်မယ်` ရေးပြီးပေးပါ
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-
-                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                # Create delete options buttons
+                delete_keyboard = [
+                    [
+                        InlineKeyboardButton("🗓️ တစ်လဟောင်းဒေတာ", callback_data="delete_old_month_direct"),
+                        InlineKeyboardButton("📅 တစ်ပတ်ဟောင်းဒေတာ", callback_data="delete_old_week_direct")
+                    ],
+                    [
+                        InlineKeyboardButton("🎯 ပန်းတိုင်များဖျက်မယ်", callback_data="delete_goals_direct"),
+                        InlineKeyboardButton("📋 မှတ်တမ်းများဖျက်မယ်", callback_data="delete_history_direct")
+                    ],
+                    [
+                        InlineKeyboardButton("📤 Export ပြီးမှ ဖျက်မယ်", callback_data="export_then_delete_direct")
+                    ],
+                    [
+                        InlineKeyboardButton("💥 အားလုံးဖျက်မယ် ⚠️", callback_data="delete_all_confirm_direct")
+                    ]
+                ]
+                delete_reply_markup = InlineKeyboardMarkup(delete_keyboard)
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=delete_reply_markup)
 
             elif button_text == "📅 ပြက္ခဒိန်":
                 # Show calendar and upcoming events
@@ -1221,6 +1257,348 @@ Export လုပ်ပြီးမှ ဖျက်သင့်ပါသလား
 """
 
                     response += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "export_csv_direct":
+                # Direct CSV export without menu
+                csv_data = self.export_manager.export_to_csv(user_id, 30)
+
+                if csv_data:
+                    # Save to file and send
+                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.csv"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(csv_data)
+
+                    response = f"""📊 **CSV ဖိုင်ပို့မှုအောင်မြင်သည်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **ပြီးမြောက်မှု:** အောင်မြင်
+📁 **ဖိုင်အမည်:** {filename}
+📅 **ဒေတာကာလ:** နောက်ဆုံး ၃၀ ရက်
+💾 **အမျိုးအစား:** CSV (Excel ဖွင့်နိုင်)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                    await query.edit_message_text(response, parse_mode='Markdown')
+
+                    # Send file
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=query.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="📊 လစာဒေတာ CSV ဖိုင် - Excel/Sheets တွင် ဖွင့်နိုင်ပါသည်"
+                        )
+                    
+                    # Clean up file
+                    os.remove(filename)
+                else:
+                    response = """❌ **CSV ပို့မှုမအောင်မြင်**
+
+ဒေတာ မတွေ့ပါ။ အချိန်မှတ်သားပြီးမှ export လုပ်ပါ။"""
+                    await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "export_json_direct":
+                # Direct JSON export without menu
+                json_data = self.export_manager.export_to_json(user_id, 30)
+
+                if json_data:
+                    # Save to file and send
+                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.json"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(json_data)
+
+                    response = f"""📄 **JSON ဖိုင်ပို့မှုအောင်မြင်သည်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **ပြီးမြောက်မှု:** အောင်မြင်
+📁 **ဖိုင်အမည်:** {filename}
+📅 **ဒေတာကာလ:** နောက်ဆုံး ၃၀ ရက်
+💾 **အမျိုးအစား:** JSON (Programming)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                    await query.edit_message_text(response, parse_mode='Markdown')
+
+                    # Send file
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=query.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="📄 လစာဒေတာ JSON ဖိုင် - Programming applications အတွက်"
+                        )
+                    
+                    # Clean up file
+                    os.remove(filename)
+                else:
+                    response = """❌ **JSON ပို့မှုမအောင်မြင်**
+
+ဒေတာ မတွေ့ပါ။ အချိန်မှတ်သားပြီးမှ export လုပ်ပါ။"""
+                    await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "export_with_analytics":
+                # Export with analytics data
+                # First create analytics summary
+                stats = self.analytics.generate_summary_stats(user_id, 30)
+                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
+                
+                # Create comprehensive report
+                report_content = f"""လစာတွက်ချက်စက်ရုံ - အစီရင်ခံစာ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 ခွဲခြမ်းစိတ်ဖြာမှု (နောက်ဆုံး ၃၀ ရက်):
+- စုစုပေါင်းအလုပ်လုပ်ရက်: {stats.get('total_days', 0)} ရက်
+- စုစုပေါင်းအလုပ်ချိန်: {stats.get('total_work_hours', 0)} နာရီ
+- ပုံမှန်နာရီ: {stats.get('total_regular_hours', 0)} နာရီ
+- OT နာရီ: {stats.get('total_ot_hours', 0)} နာရီ
+- စုစုပေါင်းလစာ: ¥{stats.get('total_salary', 0):,.0f}
+- နေ့စဉ်ပျမ်းမျှအလုပ်ချိန်: {stats.get('avg_daily_hours', 0)} နာရီ
+- နေ့စဉ်ပျမ်းမျှလစာ: ¥{stats.get('avg_daily_salary', 0):,.0f}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📈 အလုပ်ချိန်ပုံစံ (နောက်ဆုံး ၁၄ ရက်):"""
+
+                if not chart_data.get('error'):
+                    for day_data in chart_data['chart_data']:
+                        report_content += f"\n{day_data['date']}: {day_data['hours']}နာရီ (¥{day_data['salary']:,.0f})"
+
+                # Export data with analytics
+                csv_data = self.export_manager.export_to_csv(user_id, 30)
+                
+                if csv_data:
+                    filename = f"salary_analytics_report_{user_id}_{datetime.now().strftime('%Y%m%d')}.txt"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(report_content)
+
+                    response = """📈 **ခွဲခြမ်းစိတ်ဖြာမှုပါ အစီရင်ခံစာ ပို့မှုအောင်မြင်သည်**
+
+✅ လုံးဝစုံလင်သော ခွဲခြမ်းစိတ်ဖြာမှုပါ အစီရင်ခံစာကို ပို့ပြီးပါပြီ"""
+
+                    await query.edit_message_text(response, parse_mode='Markdown')
+
+                    # Send analytics report
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=query.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="📈 လစာခွဲခြမ်းစိတ်ဖြာမှု အစီရင်ခံစာ"
+                        )
+                    
+                    # Clean up file
+                    os.remove(filename)
+                else:
+                    response = "❌ အစီရင်ခံစာ ပြုလုပ်ရန် ဒေတာ မတွေ့ပါ"
+                    await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "delete_old_month_direct":
+                # Direct delete old month data
+                success = self.storage.delete_old_data(user_id, 30)
+                
+                if success:
+                    response = """🗓️ **တစ်လဟောင်းဒေတာ ဖျက်ပြီးပါပြီ**
+
+✅ ၃၀ ရက်ထက်ပိုဟောင်းသော ဒေတာများ ဖျက်ပြီး
+🔄 လက်ရှိလ ဒေတာများ ကျန်ရှိနေပါသည်"""
+                else:
+                    response = "❌ ဟောင်းဒေတာဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "delete_old_week_direct":
+                # Direct delete old week data
+                success = self.storage.delete_old_data(user_id, 7)
+                
+                if success:
+                    response = """📅 **တစ်ပတ်ဟောင်းဒေတာ ဖျက်ပြီးပါပြီ**
+
+✅ ၇ ရက်ထက်ပိုဟောင်းသော ဒေတာများ ဖျက်ပြီး
+🔄 ယခုပတ် ဒေတာများ ကျန်ရှိနေပါသည်"""
+                else:
+                    response = "❌ ဟောင်းဒေတာဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "delete_goals_direct":
+                # Direct delete goals
+                success = self.goal_tracker.delete_all_goals(user_id)
+                
+                if success:
+                    response = """🎯 **ပန်းတိုင်များ ဖျက်ပြီးပါပြီ**
+
+✅ သတ်မှတ်ပန်းတိုင်များ အားလုံး ဖျက်ပြီး
+🔄 အလုပ်မှတ်တမ်းများ မပျက်ပါ"""
+                else:
+                    response = "❌ ပန်းတိုင်ဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "delete_history_direct":
+                # Direct delete work history
+                success = self.storage.delete_work_history(user_id)
+                
+                if success:
+                    response = """📋 **အလုပ်မှတ်တမ်း ဖျက်ပြီးပါပြီ**
+
+✅ အလုပ်ချိန်မှတ်တမ်းများ အားလုံး ဖျက်ပြီး
+🔄 ပန်းတိုင်နှင့် ပွဲအစီအစဉ်များ မပျက်ပါ"""
+                else:
+                    response = "❌ မှတ်တမ်းဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "export_then_delete_direct":
+                # Show export then delete options
+                keyboard = [
+                    [
+                        InlineKeyboardButton("📊 CSV Export ပြီး ဖျက်မယ်", callback_data="csv_then_delete_final"),
+                        InlineKeyboardButton("📄 JSON Export ပြီး ဖျက်မယ်", callback_data="json_then_delete_final")
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                response = """📤🗑️ **Export ပြီးမှ ဖျက်မှု**
+
+🔒 လုံခြုံသောနည်းလမ်း: ဒေတာများကို အရင် backup လုပ်ပြီးမှ ဖျက်ပါ
+
+မည်သည့်ပုံစံဖြင့် Export လုပ်လိုပါသလဲ?"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "csv_then_delete_final":
+                # Export CSV then delete all
+                csv_data = self.export_manager.export_to_csv(user_id, 365)  # Get all data
+                
+                if csv_data:
+                    filename = f"backup_before_delete_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(csv_data)
+                    
+                    # Send backup file first
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=query.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="💾 ဒေတာ backup ဖိုင် - ဖျက်ခြင်းမတိုင်မီ သိမ်းထားပါ"
+                        )
+                    
+                    # Now delete all data
+                    delete_success = self.storage.delete_user_data(user_id)
+                    
+                    if delete_success:
+                        response = """📊💥 **CSV Export ပြီး အားလုံးဖျက်မှု အောင်မြင်သည်**
+
+✅ ဒေတာများကို CSV backup လုပ်ပြီး အားလုံးဖျက်ပြီးပါပြီ
+💾 Backup ဖိုင်ကို သိမ်းထားပါ
+🔄 စနစ်သည် စတင်အခြေအနေသို့ ပြန်သွားပါပြီ"""
+                    else:
+                        response = """❌ Export အောင်မြင်သော်လည်း ဖျက်မှုမအောင်မြင်
+
+💾 သင့်ဒေတာများ backup လုပ်ပြီးပါပြီ"""
+                    
+                    # Clean up backup file
+                    os.remove(filename)
+                else:
+                    response = "❌ Export လုပ်ရန် ဒေတာ မတွေ့ပါ"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "json_then_delete_final":
+                # Export JSON then delete all
+                json_data = self.export_manager.export_to_json(user_id, 365)  # Get all data
+                
+                if json_data:
+                    filename = f"backup_before_delete_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(json_data)
+                    
+                    # Send backup file first
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=query.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="💾 ဒေတာ backup ဖိုင် - ဖျက်ခြင်းမတိုင်မီ သိမ်းထားပါ"
+                        )
+                    
+                    # Now delete all data
+                    delete_success = self.storage.delete_user_data(user_id)
+                    
+                    if delete_success:
+                        response = """📄💥 **JSON Export ပြီး အားလုံးဖျက်မှု အောင်မြင်သည်**
+
+✅ ဒေတာများကို JSON backup လုပ်ပြီး အားလုံးဖျက်ပြီးပါပြီ
+💾 Backup ဖိုင်ကို သိမ်းထားပါ
+🔄 စနစ်သည် စတင်အခြေအနေသို့ ပြန်သွားပါပြီ"""
+                    else:
+                        response = """❌ Export အောင်မြင်သော်လည်း ဖျက်မှုမအောင်မြင်
+
+💾 သင့်ဒေတာများ backup လုပ်ပြီးပါပြီ"""
+                    
+                    # Clean up backup file
+                    os.remove(filename)
+                else:
+                    response = "❌ Export လုပ်ရန် ဒေတာ မတွေ့ပါ"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "delete_all_confirm_direct":
+                # Show final confirmation for deleting all data
+                keyboard = [
+                    [
+                        InlineKeyboardButton("💥 ဟုတ်ကဲ့ အားလုံးဖျက်မယ်", callback_data="delete_all_final_direct"),
+                        InlineKeyboardButton("❌ မဖျက်တော့ပါ", callback_data="cancel_delete")
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                response = """💥 **နောက်ဆုံးအတည်ပြုချက်**
+
+⚠️ **အန္တရာယ်ကြီးမားသော လုပ်ဆောင်ချက်** ⚠️
+
+🔴 သင် ဖျက်တော့မည့်အရာများ:
+• 📋 အလုပ်မှတ်တမ်းအားလုံး
+• 🎯 ပန်းတိုင်များအားလုံး  
+• 📅 ပွဲအစီအစဉ်များအားလုံး
+• 🔔 သတိပေးချက်များအားလုံး
+
+🚨 ဤလုပ်ဆောင်ချက်ကို ပြန်ပြေးမရပါ
+
+သေချာပါသလား?"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "delete_all_final_direct":
+                # Final delete all user data
+                success = self.storage.delete_user_data(user_id)
+
+                if success:
+                    response = """🗑️ **အားလုံးဖျက်မှု အောင်မြင်သည်**
+
+✅ သင့်ဒေတာအားလုံး ဖျက်ပြီးပါပြီ
+🔄 စနစ်အခြေအနေ: စတင်အခြေအနေသို့ ပြန်သွားပါပြီ
+📱 အချိန်ထည့်ပြီး စတင်နိုင်ပါပြီ
+
+💪 **စတင်လိုက်ပါ!** အလုပ်ချိန်ပထမဆုံး ထည့်ကြည့်ပါ"""
+                else:
+                    response = """❌ **အားလုံးဖျက်မှု မအောင်မြင်**
+
+🔴 ဒေတာဖျက်ရာတွင် စနစ်ပြဿနာရှိခဲ့သည်
+🔄 ထပ်မံကြိုးစားပါ သို့မဟုတ် Bot restart လုပ်ပါ"""
+
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "cancel_delete":
+                response = """❌ **ဖျက်မှုကို ပယ်ဖျက်သည်**
+
+✅ သင့်ဒေတာများ လုံခြုံပါသည်
+🔄 မည်သည့်အရာမှ ပြောင်းလဲခြင်း မရှိပါ"""
 
                 await query.edit_message_text(response, parse_mode='Markdown')
 
