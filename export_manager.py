@@ -191,7 +191,7 @@ class ExportManager:
             if not user_data:
                 return {'error': 'ပို့ရန်ဒေတာ မရှိပါ။'}
             
-            total_records = sum(len(calcs) if isinstance(calcs, list) else 0 for calcs in user_data.values())
+            total_records = sum(len(calcs) if isinstance(calcs, list) else 1 for calcs in user_data.values())
             total_days = len(user_data)
             
             dates = sorted(user_data.keys())
@@ -212,10 +212,10 @@ class ExportManager:
     def export_to_csv(self, user_id: str, days: int = 30) -> Optional[str]:
         """Export data to CSV format."""
         try:
-            data = self.storage.get_date_range_data(user_id, days)
-            calculations = data.get('calculations', {})
+            # Get user data directly
+            user_data = self.storage.load_user_data(user_id)
             
-            if not calculations:
+            if not user_data:
                 return None
             
             output = StringIO()
@@ -229,49 +229,51 @@ class ExportManager:
             ])
             
             # Data rows
-            for date_str in sorted(calculations.keys()):
-                date_calculations = calculations[date_str]
+            for date_str in sorted(user_data.keys()):
+                date_calculations = user_data[date_str]
                 if isinstance(date_calculations, list):
                     for calc in date_calculations:
                         writer.writerow([
                             date_str,
-                            calc['start_time'],
-                            calc['end_time'],
-                            calc['shift_type'],
-                            calc['total_minutes'],
-                            calc['break_minutes'],
-                            calc['paid_minutes'],
-                            round(calc['regular_minutes'] / 60, 2),
-                            round(calc['ot_minutes'] / 60, 2),
-                            round(calc['night_ot_minutes'] / 60, 2),
-                            calc['total_salary'],
-                            calc['regular_salary'],
-                            calc['ot_salary'],
-                            calc['night_ot_salary']
+                            calc.get('start_time', ''),
+                            calc.get('end_time', ''),
+                            calc.get('shift_type', ''),
+                            calc.get('total_minutes', 0),
+                            calc.get('break_minutes', 0),
+                            calc.get('paid_minutes', 0),
+                            round(calc.get('regular_minutes', 0) / 60, 2),
+                            round(calc.get('ot_minutes', 0) / 60, 2),
+                            round(calc.get('night_ot_minutes', 0) / 60, 2),
+                            calc.get('total_salary', 0),
+                            calc.get('regular_salary', 0),
+                            calc.get('ot_salary', 0),
+                            calc.get('night_ot_salary', 0)
                         ])
             
             return output.getvalue()
             
         except Exception as e:
+            print(f"CSV export error: {e}")
             return None
     
     def export_to_json(self, user_id: str, days: int = 30) -> Optional[str]:
         """Export data to JSON format."""
         try:
-            data = self.storage.get_date_range_data(user_id, days)
-            calculations = data.get('calculations', {})
+            # Get user data directly
+            user_data = self.storage.load_user_data(user_id)
             
-            if not calculations:
+            if not user_data:
                 return None
             
             export_data = {
                 'user_id': user_id,
                 'export_date': datetime.now().isoformat(),
                 'period_days': days,
-                'calculations': calculations
+                'calculations': user_data
             }
             
             return json.dumps(export_data, ensure_ascii=False, indent=2)
             
         except Exception as e:
+            print(f"JSON export error: {e}")
             return None
