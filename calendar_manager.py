@@ -305,24 +305,38 @@ class CalendarManager:
     
     def get_today_events(self, user_id: str) -> Dict:
         """Get today's events."""
-        data = self.load_calendar_data()
-        
-        if user_id not in data["users"]:
-            return {"events": [], "total": 0}
-        
-        today_str = date.today().strftime("%Y-%m-%d")
-        today_events = []
-        
-        for event in data["users"][user_id]["events"]:
-            if event["date"] == today_str:
-                today_events.append({
-                    **event,
+        try:
+            data = self.load_calendar_data()
+            
+            if user_id not in data["users"]:
+                return {
+                    "events": [], 
+                    "total": 0,
+                    "date": date.today().strftime("%Y-%m-%d"),
                     "burmese_date": self._format_burmese_date(date.today())
-                })
-        
-        return {
-            "events": today_events,
-            "total": len(today_events),
-            "date": today_str,
-            "burmese_date": self._format_burmese_date(date.today())
-        }
+                }
+            
+            today_str = date.today().strftime("%Y-%m-%d")
+            today_events = []
+            
+            for event in data["users"][user_id]["events"]:
+                if event["date"] == today_str:
+                    today_events.append({
+                        **event,
+                        "burmese_date": self._format_burmese_date(date.today())
+                    })
+            
+            return {
+                "events": today_events,
+                "total": len(today_events),
+                "date": today_str,
+                "burmese_date": self._format_burmese_date(date.today())
+            }
+        except Exception as e:
+            # Return safe fallback
+            return {
+                "events": [], 
+                "total": 0,
+                "date": date.today().strftime("%Y-%m-%d"),
+                "burmese_date": "ယနေ့"
+            }
