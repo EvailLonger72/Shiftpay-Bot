@@ -49,10 +49,19 @@ class SalaryCalculator:
                 start_time, end_time, paid_minutes
             )
             
-            # Calculate salary - All OT at 2625¥ rate
+            # Calculate salary with proper night shift handling
             regular_salary = (regular_minutes / 60) * self.BASE_RATE
-            ot_salary = (ot_minutes / 60) * self.NIGHT_OT_RATE  # All OT at 2625¥ rate
-            night_ot_salary = (night_ot_minutes / 60) * self.NIGHT_OT_RATE
+            
+            # Night shift: 22:00 နာရီကျော်တာနဲ့ AUTO 2625¥, နောက်နေ့ရောက်လဲ 2625¥
+            if shift_type == 'C342' or end_time.date() > start_time.date():
+                # Night shift or work crosses midnight - all OT at 2625¥ rate
+                ot_salary = (ot_minutes / 60) * self.NIGHT_OT_RATE
+                night_ot_salary = (night_ot_minutes / 60) * self.NIGHT_OT_RATE
+            else:
+                # Day shift - regular OT at 2100¥, night OT at 2625¥
+                ot_salary = (ot_minutes / 60) * self.BASE_RATE
+                night_ot_salary = (night_ot_minutes / 60) * self.NIGHT_OT_RATE
+            
             total_salary = regular_salary + ot_salary + night_ot_salary
             
             return {
@@ -119,24 +128,35 @@ class SalaryCalculator:
         crosses_midnight = end_time.date() > start_time.date()
         is_night_shift = start_time.hour >= 16  # Night shift typically starts at 16:00 or later
         
-        # All OT at 2625¥ rate regardless of shift type
-        if total_overtime_minutes > 0:
-            # All overtime (day or night) at 2625¥ rate
-            night_ot_minutes = total_overtime_minutes
-            regular_ot_minutes = 0
+        # Night shift logic: 22:00 နာရီကျော်တာနဲ့ AUTO 2625¥, နောက်နေ့ရောက်လဲ 2625¥
+        if is_night_shift or crosses_midnight:
+            # Night shift: All OT at 2625¥ rate
+            if total_overtime_minutes > 0:
+                night_ot_minutes = total_overtime_minutes
+                regular_ot_minutes = 0
+            else:
+                night_ot_minutes = 0
+                regular_ot_minutes = 0
         else:
-            night_ot_minutes = 0
-            regular_ot_minutes = 0
+            # Day shift: Check if OT occurs after 22:00
+            night_ot_minutes = self.calculate_night_overtime(start_time, end_time, paid_minutes)
+            regular_ot_minutes = total_overtime_minutes - night_ot_minutes
         
         return regular_minutes, regular_ot_minutes, night_ot_minutes
     
     def calculate_night_overtime(self, start_time: datetime, end_time: datetime, 
                                paid_minutes: int) -> int:
         """Calculate night overtime minutes (work after 22:00)."""
+        # Create 22:00 time for comparison
         night_start = start_time.replace(hour=self.NIGHT_START_HOUR, minute=0, second=0, microsecond=0)
         
+        # Handle next day end time
+        if end_time.date() > start_time.date():
+            # Work crosses midnight - adjust night_start for next day calculation
+            pass
+        
         # If work ends before 22:00, no night OT
-        if end_time <= night_start:
+        if end_time <= night_start and end_time.date() == start_time.date():
             return 0
         
         # If work starts after 22:00, all overtime is night OT
@@ -144,7 +164,13 @@ class SalaryCalculator:
             return max(0, paid_minutes - self.REGULAR_HOURS_LIMIT)
         
         # Calculate work time after 22:00
-        night_work_minutes = self.time_utils.calculate_total_minutes(night_start, end_time)
+        if end_time.date() > start_time.date():
+            # Work crosses midnight - all work after 22:00 is night OT
+            night_work_start = max(start_time, night_start)
+            night_work_minutes = self.time_utils.calculate_total_minutes(night_work_start, end_time)
+        else:
+            # Same day work - calculate time after 22:00
+            night_work_minutes = self.time_utils.calculate_total_minutes(night_start, end_time)
         
         # Night OT is the portion of overtime that happens after 22:00
         total_ot_minutes = max(0, paid_minutes - self.REGULAR_HOURS_LIMIT)
