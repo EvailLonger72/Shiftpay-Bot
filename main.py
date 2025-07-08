@@ -615,55 +615,40 @@ class SalaryTelegramBot:
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
             elif button_text == "⏰ အချိန်သတ်မှတ်":
-                # Show time setting menu with AM/PM options
+                # Show shift selection menu first
                 response = f"""⏰ **အချိန်သတ်မှတ်မီနူး**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📝 **အချိန်သတ်မှတ်နည်းများ:**
+📝 **ရှေ့ဆုံး Shift အမျိုးအစားရွေးချယ်ပါ:**
 
-**1. AM/PM ပုံစံ:**
-• `Set 08:30 AM To 05:30 PM`
-• `Set 09:00 AM To 06:00 PM`
+🌅 **Day Shift (နေ့ပိုင်းအလုပ်):**
+   • စချိန်: 06:20 (Fixed)
+   • နှုန်း: ¥2,100/နာရီ (ပုံမှန်), ¥2,625/နာရီ (OT)
 
-**2. 24-Hour ပုံစံ:**
-• `Set 08:30 To 17:30`
-• `Set 16:45 To 01:25`
-
-**3. Shift Code များ:**
-• `Set C341` (Day Shift: 08:30 AM - 05:30 PM)
-• `Set C342` (Night Shift: 04:45 PM - 01:25 AM)
+🌙 **Night Shift (ညပိုင်းအလုပ်):**
+   • စချိန်: 16:35 (Fixed)  
+   • နှုန်း: ¥2,625/နာရီ (နောက်နေ့ရောက်ပါက)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💡 **ဥပမာများ:**
-• Morning: `Set 07:00 AM To 04:00 PM`
-• Evening: `Set 02:00 PM To 11:00 PM`
-• Night: `Set 10:00 PM To 07:00 AM`
+📌 **နောက်ပြီး အပြီးချိန်ကိုသာ ရွေးချယ်ရပါမည်**
 
-🎯 **Quick Presets:**"""
+🎯 **Shift အမျိုးအစားရွေးချယ်ပါ:**"""
 
-                # Create quick preset buttons
-                preset_keyboard = [
+                # Create shift selection buttons
+                shift_keyboard = [
                     [
-                        InlineKeyboardButton("🌅 C341 Day Shift", callback_data="preset_c341"),
-                        InlineKeyboardButton("🌙 C342 Night Shift", callback_data="preset_c342")
-                    ],
-                    [
-                        InlineKeyboardButton("🕗 8AM-5PM", callback_data="preset_8to5"),
-                        InlineKeyboardButton("🕘 9AM-6PM", callback_data="preset_9to6")
-                    ],
-                    [
-                        InlineKeyboardButton("🕐 2PM-11PM", callback_data="preset_2to11"),
-                        InlineKeyboardButton("🕙 10PM-7AM", callback_data="preset_10to7")
+                        InlineKeyboardButton("🌅 Day Shift (06:20 စ)", callback_data="select_day_shift"),
+                        InlineKeyboardButton("🌙 Night Shift (16:35 စ)", callback_data="select_night_shift")
                     ],
                     [
                         InlineKeyboardButton("⌨️ အချိန်ကိုယ်တိုင်ရေး", callback_data="manual_time_input")
                     ]
                 ]
-                preset_reply_markup = InlineKeyboardMarkup(preset_keyboard)
+                shift_reply_markup = InlineKeyboardMarkup(shift_keyboard)
 
-                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=preset_reply_markup)
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=shift_reply_markup)
 
             elif button_text == "ℹ️ အကူအညီ":
                 await self.help(update, context)
@@ -1734,6 +1719,118 @@ class SalaryTelegramBot:
 
                 await query.edit_message_text(response, parse_mode='Markdown')
 
+            elif callback_data == "select_day_shift":
+                # Show day shift end time options
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🕐 13:00 (6နာရီ 40မိနစ်)", callback_data="day_shift_13:00"),
+                        InlineKeyboardButton("🕑 14:00 (7နာရီ 40မိနစ်)", callback_data="day_shift_14:00")
+                    ],
+                    [
+                        InlineKeyboardButton("🕒 15:00 (8နာရီ 40မိနစ်)", callback_data="day_shift_15:00"),
+                        InlineKeyboardButton("🕓 16:00 (9နာရီ 40မိနစ်)", callback_data="day_shift_16:00")
+                    ],
+                    [
+                        InlineKeyboardButton("🕔 17:00 (10နာရီ 40မိနစ်)", callback_data="day_shift_17:00"),
+                        InlineKeyboardButton("🕕 18:00 (11နာရီ 40မိနစ်)", callback_data="day_shift_18:00")
+                    ],
+                    [
+                        InlineKeyboardButton("⌨️ အချိန်ကိုယ်တိုင်ရေး", callback_data="day_shift_manual")
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                response = """🌅 **Day Shift - အပြီးချိန်ရွေးချယ်ပါ**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **စချိန်:** 06:20 (Fixed)
+💰 **နှုန်း:** ¥2,100/နာရီ (ပုံမှန်), ¥2,625/နာရီ (OT)
+
+🕐 **အပြီးချိန်ရွေးချယ်ပါ:**
+• 7h35m ကျော်လွန်ပါက OT ¥2,625/နာရီ
+• Break အချိန်များ အလိုအလျောက်နုတ်သည်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "select_night_shift":
+                # Show night shift end time options
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🕐 01:00 (8နာရီ 25မိနစ်)", callback_data="night_shift_01:00"),
+                        InlineKeyboardButton("🕑 02:00 (9နာရီ 25မိနစ်)", callback_data="night_shift_02:00")
+                    ],
+                    [
+                        InlineKeyboardButton("🕒 03:00 (10နာရီ 25မိနစ်)", callback_data="night_shift_03:00"),
+                        InlineKeyboardButton("🕓 04:00 (11နာရီ 25မိနစ်)", callback_data="night_shift_04:00")
+                    ],
+                    [
+                        InlineKeyboardButton("🕔 05:00 (12နာရီ 25မိနစ်)", callback_data="night_shift_05:00"),
+                        InlineKeyboardButton("🕕 06:00 (13နာရီ 25မိနစ်)", callback_data="night_shift_06:00")
+                    ],
+                    [
+                        InlineKeyboardButton("🕖 07:00 (14နာရီ 25မိနစ်)", callback_data="night_shift_07:00"),
+                        InlineKeyboardButton("🕗 08:00 (15နာရီ 25မိနစ်)", callback_data="night_shift_08:00")
+                    ],
+                    [
+                        InlineKeyboardButton("⌨️ အချိန်ကိုယ်တိုင်ရေး", callback_data="night_shift_manual")
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                response = """🌙 **Night Shift - အပြီးချိန်ရွေးချယ်ပါ**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **စချိန်:** 16:35 (Fixed)
+💰 **နှုန်း:** ¥2,625/နာရီ (နောက်နေ့ရောက်ပါက)
+
+🕐 **အပြီးချိန်ရွေးချယ်ပါ:**
+• နောက်နေ့ရောက်ပါက ¥2,625/နာရီ
+• 7h35m ကျော်လွန်ပါက OT ¥2,625/နာရီ
+• Break အချိန်များ အလိုအလျောက်နုတ်သည်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data.startswith("day_shift_") and callback_data != "day_shift_manual":
+                # Handle day shift time selection
+                end_time = callback_data.replace("day_shift_", "")
+                await self.handle_shift_calculation(query, context, "06:20", end_time, "Day Shift")
+
+            elif callback_data.startswith("night_shift_") and callback_data != "night_shift_manual":
+                # Handle night shift time selection
+                end_time = callback_data.replace("night_shift_", "")
+                await self.handle_shift_calculation(query, context, "16:35", end_time, "Night Shift")
+
+            elif callback_data in ["day_shift_manual", "night_shift_manual"]:
+                # Show manual input for specific shift
+                shift_type = "Day" if callback_data == "day_shift_manual" else "Night"
+                start_time = "06:20" if shift_type == "Day" else "16:35"
+                
+                response = f"""⌨️ **{shift_type} Shift - အပြီးချိန်ကိုယ်တိုင်ရေး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **စချိန်:** {start_time} (Fixed)
+
+📝 **အပြီးချိန်ရေးပုံ:**
+• `{start_time} ~ 17:00` (ပုံမှန်ပုံစံ)
+• `Set {start_time} To 17:00` (Set ပုံစံ)
+
+💡 **ဥပမာများ:**
+• `{start_time} ~ 15:30`
+• `Set {start_time} To 02:00` (နောက်နေ့)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 **ယခု keyboard ကိုအသုံးပြု၍ ရေးထည့်ပါ**"""
+
+                await query.edit_message_text(response, parse_mode='Markdown')
+
             elif callback_data.startswith("preset_"):
                 # Handle preset time buttons
                 await self.handle_preset_time(query, context, callback_data)
@@ -1987,6 +2084,7 @@ class SalaryTelegramBot:
         """Handle time setting commands with AM/PM format."""
         user_id = str(update.effective_user.id)
         keyboard = self.get_main_keyboard()
+        response = ""  # Initialize response variable
 
         try:
             # Parse command: "Set 08:30 AM To 05:30 PM"
@@ -2039,14 +2137,14 @@ class SalaryTelegramBot:
             calculation_saved = self.storage.save_calculation(user_id, result)
 
             # Format response in Burmese
-            response = self.formatter.format_salary_response(result)
+            formatted_response = self.formatter.format_salary_response(result)
 
             # Add set time confirmation
             response = f"""✅ **အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{response}
+{formatted_response}
 
 💡 **နောက်တစ်ကြိမ် Set လုပ်ရန်** ⏰ အချိန်သတ်မှတ် ခလုတ်ကို နှိပ်ပါ"""
 
@@ -2056,6 +2154,40 @@ class SalaryTelegramBot:
             logger.error(f"Error handling time set command: {e}")
             response = "❌ **အချိန်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
             await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+    async def handle_shift_calculation(self, query, context: ContextTypes.DEFAULT_TYPE, start_time: str, end_time: str, shift_name: str) -> None:
+        """Handle shift calculation with fixed start time."""
+        user_id = str(query.from_user.id)
+
+        try:
+            # Calculate salary using the shift times
+            result = self.calculator.calculate_salary(start_time, end_time)
+
+            if result['error']:
+                response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+                await query.edit_message_text(response, parse_mode='Markdown')
+                return
+
+            # Save calculation data
+            calculation_saved = self.storage.save_calculation(user_id, result)
+
+            # Format response in Burmese
+            formatted_response = self.formatter.format_salary_response(result)
+
+            # Add shift confirmation
+            response = f"""✅ **{shift_name} အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{formatted_response}
+
+💡 **နောက်တစ်ကြိမ် သတ်မှတ်ရန်** ⏰ အချိန်သတ်မှတ် ခလုတ်ကို နှိပ်ပါ"""
+
+            await query.edit_message_text(response, parse_mode='Markdown')
+
+        except Exception as e:
+            logger.error(f"Error handling shift calculation: {e}")
+            await query.edit_message_text("❌ **အချိန်တွက်ချက်ရာတွင် အမှားရှိခဲ့သည်**", parse_mode='Markdown')
 
     def convert_ampm_to_24h(self, time_str: str) -> str:
         """Convert AM/PM time to 24-hour format."""
