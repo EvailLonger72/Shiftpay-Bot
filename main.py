@@ -752,7 +752,8 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
-                await query.edit_message_text(response, parse_mode='Markdown')```python
+                await query.edit_message_text(response, parse_mode='Markdown')
+
             elif callback_data == "performance_alert":
                 # Show performance alert
                 alert_info = self.notification_manager.generate_work_summary_alert(user_id)
