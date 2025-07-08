@@ -1,0 +1,94 @@
+I want to build a salary Telegram bot calculator that takes a user's daily input (start time and end time), auto-detects shift, deducts break time correctly, splits working hours into regular, overtime, and night overtime, and responds in Burmese with a clean Telegram-ready message.
+
+━━━━━━━━━━━━━━━
+📥 User Input Format:
+━━━━━━━━━━━━━━━
+- Start Time ~ End Time (e.g. 08:30 ~ 17:30)
+- User sends only time, one line per day
+
+━━━━━━━━━━━━━━━
+🕒 Shift Definitions:
+━━━━━━━━━━━━━━━
+1. C341 – Day Shift  
+   - Time: 08:30 〜 17:30  
+   - Breaks (UNPAID – must deduct):
+     - 08:30〜08:40 (10 min)  
+     - 10:40〜11:25 (45 min)  
+     - 13:05〜13:15 (10 min)  
+     - 14:35〜14:45 (10 min)  
+     - 16:10〜16:20 (10 min)  
+     - 17:20〜17:35 (15 min)  
+    
+
+2. C342 – Night Shift  
+   - Time: 16:45 〜 01:25  
+   - Breaks (UNPAID – must deduct):
+     - 18:45〜18:55 (10 min)  
+     - 20:55〜21:40 (45 min)  
+     - 23:10〜23:20 (10 min)  
+     - 00:50〜01:00 (10 min)  
+     - 02:25 〜 02:35 (10 min)  
+     -03:35 〜 03:50 (15 min)
+
+⚠️ Breaks must only be deducted if the work time overlaps with that break range.
+
+━━━━━━━━━━━━━━━
+💴 Salary Rules:
+━━━━━━━━━━━━━━━
+- Base rate: ¥2,100/hour  
+- Up to 7h35m = Regular  
+- If total paid time > 7h35m:
+   - Overtime before 22:00 → ¥2,100/hour  
+   - Night OT (22:00 onward) → ¥2,625/hour
+
+━━━━━━━━━━━━━━━
+🖥️ Expected Response (in Burmese)
+━━━━━━━━━━━━━━━
+- Font size must suit Telegram (~15pt)
+- Respond with:
+  1. 📅 နေ့ရက်
+  2. 🕒 စတင် / ပြီးချိန်
+  3. 🟦 Break Time အချိန်
+  4. 🧮 စုစုပေါင်းအလုပ်လုပ်ချိန်
+  5. 💴 လစာ Breakdown
+  6. 📊 Diagram-style visual using text + emojis  
+     (Use 🟩 for work, 🔵 for break, ➤ arrows for flow)
+
+━━━━━━━━━━━━━━━
+🧪 Example Input:
+━━━━━━━━━━━━━━━
+08:30 ~ 17:30
+
+━━━━━━━━━━━━━━━
+📤 Sample Response Format:
+━━━━━━━━━━━━━━━
+📅 2025/07/08  
+🕒 08:30 → 17:30  
+🟦 Breaks: 2h25m (deducted)
+
+━━━━━━━━━━━━━━━  
+🧮 💼 အလုပ်ချိန်တွက်ချက်  
+━━━━━━━━━━━━━━━  
+✅ စုစုပေါင်း – 9 နာရီ  
+➖ Break 145 မိနစ် ချန်ပြီး – 6 နာရီ 35 မိနစ်
+
+━━━━━━━━━━━━━━━  
+💴 လစာ Breakdown  
+━━━━━━━━━━━━━━━  
+🟢 ပုံမှန်နာရီ (6.58 နာရီ)  
+→ ¥2,100 × 6.58 = ¥13,818  
+🔵 OT = 0  
+🌙 Night OT = 0  
+━━━━━━━━━━━━━━━  
+💰 စုစုပေါင်း = ¥13,818
+
+━━━━━━━━━━━━━━━  
+📊 Diagram  
+━━━━━━━━━━━━━━━  
+[08:30] 🟩───[10:40] 🔵───[11:25] 🟩───[13:05] 🔵───[13:15]  
+🟩───[14:35] 🔵───[14:55] 🟩───[15:10] 🔵───[16:10]  
+🟩───[17:20] 🔵───[17:30]
+
+━━━━━━━━━━━━━━━
+
+Please return the logic, formulas, and a sample response generation function in Burmese. Make it reusable for both Web App and Telegram Bot.
