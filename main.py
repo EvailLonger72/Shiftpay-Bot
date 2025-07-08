@@ -42,23 +42,26 @@ class SalaryTelegramBot:
         """Create the main reply keyboard."""
         keyboard = [
             [
-                KeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု"),
-                KeyboardButton("📈 ဂရပ်ပြမှု")
+                KeyboardButton("⏰ အချိန်သတ်မှတ်"),
+                KeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု")
             ],
             [
-                KeyboardButton("📋 မှတ်တမ်း"),
-                KeyboardButton("🎯 ပန်းတိုင်")
+                KeyboardButton("📈 ဂရပ်ပြမှု"),
+                KeyboardButton("📋 မှတ်တမ်း")
             ],
             [
-                KeyboardButton("📅 ပြက္ခဒိန်"),
-                KeyboardButton("💰 လစာရက်")
+                KeyboardButton("🎯 ပန်းတိုင်"),
+                KeyboardButton("📅 ပြက္ခဒိန်")
             ],
             [
-                KeyboardButton("📤 ပို့မှု"),
-                KeyboardButton("🔔 သတိပေးချက်")
+                KeyboardButton("💰 လစာရက်"),
+                KeyboardButton("📤 ပို့မှု")
             ],
             [
-                KeyboardButton("🗑️ ဒေတာဖျက်မှု"),
+                KeyboardButton("🔔 သတိပေးချက်"),
+                KeyboardButton("🗑️ ဒေတာဖျက်မှု")
+            ],
+            [
                 KeyboardButton("ℹ️ အကူအညီ")
             ]
         ]
@@ -97,6 +100,13 @@ class SalaryTelegramBot:
 
 **⏰ အချိန်ပုံစံများ / Time Formats:**
 
+**⏰ အချိန်သတ်မှတ်မှု (အသစ်!):**
+• `Set 08:30 AM To 05:30 PM` (AM/PM ပုံစံ)
+• `Set 02:00 PM To 11:00 PM` (ညပိုင်းအလုပ်)
+• `Set 10:00 PM To 07:00 AM` (ညနက်အလုပ်)
+• `Set C341` = Day Shift, `Set C342` = Night Shift
+
+**ရိုးရှင်းပုံစံများ:**
 • `08:30 ~ 17:30` (ပုံမှန်ပုံစံ)
 • `2025-07-15 08:30 ~ 17:30` (နေ့စွဲပါပုံစံ)
 • `C341` = Day Shift (08:30 ~ 17:30)
@@ -215,7 +225,8 @@ class SalaryTelegramBot:
 
             # Handle keyboard button presses
             if user_input in ["📊 ခွဲခြမ်းစိတ်ဖြာမှု", "📈 ဂရပ်ပြမှု", "📋 မှတ်တမ်း", "🎯 ပန်းတိုင်", 
-                             "📅 ပြက္ခဒိန်", "💰 လစာရက်", "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ"]:
+                             "📅 ပြက္ခဒိန်", "💰 လစာရက်", "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ",
+                             "⏰ အချိန်သတ်မှတ်"]:
                 await self.handle_keyboard_button(update, context, user_input)
                 return
 
@@ -232,6 +243,9 @@ class SalaryTelegramBot:
             elif user_input.startswith("ချိန်ပန်းတိုင် "):
                 await self.handle_hours_goal_command(update, context, user_input)
                 return
+            elif user_input.startswith("Set "):
+                await self.handle_time_set_command(update, context, user_input)
+                return
             elif user_input in ["CSV ပို့မယ်", "JSON ပို့မယ်", "အားလုံးဖျက်မယ်"]:
                 await self.handle_text_commands(update, context, user_input)
                 return
@@ -240,7 +254,7 @@ class SalaryTelegramBot:
             if '~' not in user_input:
                 keyboard = self.get_main_keyboard()
                 await update.message.reply_text(
-                    "❌ **အမှားရှိသည်**\n\nဥပမာ: 08:30 ~ 17:30\nသို့မဟုတ် C341, C342", 
+                    "❌ **အမှားရှိသည်**\n\n**အချိန်ထည့်နည်းများ:**\n• 08:30 ~ 17:30\n• C341, C342\n• Set 08:30 AM To 05:30 PM\n\n**⏰ အချိန်သတ်မှတ်** ခလုတ်ကိုလည်း နှိပ်နိုင်ပါသည်", 
                     parse_mode='Markdown', 
                     reply_markup=keyboard
                 )
@@ -612,6 +626,57 @@ class SalaryTelegramBot:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+            elif button_text == "⏰ အချိန်သတ်မှတ်":
+                # Show time setting menu with AM/PM options
+                response = f"""⏰ **အချိန်သတ်မှတ်မီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 **အချိန်သတ်မှတ်နည်းများ:**
+
+**1. AM/PM ပုံစံ:**
+• `Set 08:30 AM To 05:30 PM`
+• `Set 09:00 AM To 06:00 PM`
+
+**2. 24-Hour ပုံစံ:**
+• `Set 08:30 To 17:30`
+• `Set 16:45 To 01:25`
+
+**3. Shift Code များ:**
+• `Set C341` (Day Shift: 08:30 AM - 05:30 PM)
+• `Set C342` (Night Shift: 04:45 PM - 01:25 AM)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 **ဥပမာများ:**
+• Morning: `Set 07:00 AM To 04:00 PM`
+• Evening: `Set 02:00 PM To 11:00 PM`
+• Night: `Set 10:00 PM To 07:00 AM`
+
+🎯 **Quick Presets:**"""
+
+                # Create quick preset buttons
+                preset_keyboard = [
+                    [
+                        InlineKeyboardButton("🌅 C341 Day Shift", callback_data="preset_c341"),
+                        InlineKeyboardButton("🌙 C342 Night Shift", callback_data="preset_c342")
+                    ],
+                    [
+                        InlineKeyboardButton("🕗 8AM-5PM", callback_data="preset_8to5"),
+                        InlineKeyboardButton("🕘 9AM-6PM", callback_data="preset_9to6")
+                    ],
+                    [
+                        InlineKeyboardButton("🕐 2PM-11PM", callback_data="preset_2to11"),
+                        InlineKeyboardButton("🕙 10PM-7AM", callback_data="preset_10to7")
+                    ],
+                    [
+                        InlineKeyboardButton("⌨️ အချိန်ကိုယ်တိုင်ရေး", callback_data="manual_time_input")
+                    ]
+                ]
+                preset_reply_markup = InlineKeyboardMarkup(preset_keyboard)
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=preset_reply_markup)
 
             elif button_text == "ℹ️ အကူအညီ":
                 await self.help(update, context)
@@ -1642,9 +1707,39 @@ class SalaryTelegramBot:
 
                 await query.edit_message_text(response, parse_mode='Markdown')
 
+            elif callback_data.startswith("preset_"):
+                # Handle preset time buttons
+                await self.handle_preset_time(query, context, callback_data)
+
+            elif callback_data == "manual_time_input":
+                # Show manual input instructions
+                response = """⌨️ **အချိန်ကိုယ်တိုင်ရေးထည့်ခြင်း**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 **အောက်ပါပုံစံများဖြင့် ရေးထည့်ပါ:**
+
+**AM/PM ပုံစံ:**
+• `Set 08:30 AM To 05:30 PM`
+• `Set 11:00 AM To 08:00 PM`
+
+**24-Hour ပုံစံ:**
+• `Set 08:30 To 17:30`
+• `Set 23:00 To 07:00`
+
+**Shift Codes:**
+• `Set C341` (Day Shift)
+• `Set C342` (Night Shift)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 **ယခု စာရေးရန်** keyboard ကို အသုံးပြု၍ သင့်အချိန်ကို ရေးထည့်ပါ"""
+
+                await query.edit_message_text(response, parse_mode='Markdown')
+
             elif callback_data == "back_to_main":
                 # Go back to main menu
-                response = "🏠 **ပင်မစာမျက်နှာ**\n\nအချိန်ပေးပို့ပြီး လစာတွက်ချက်ပါ (ဥပမာ: 08:30 ~ 17:30)"
+                response = "🏠 **ပင်မစာမျက်နှာ**\n\nအချိန်ပေးပို့ပြီး လစာတွက်ချက်ပါ (ဥပမာ: 08:30 ~ 17:30 သို့မဟုတ် Set 08:30 AM To 05:30 PM)"
 
                 await query.edit_message_text(response, parse_mode='Markdown')
 
@@ -1810,6 +1905,176 @@ class SalaryTelegramBot:
             logger.error(f"Error handling hours goal command: {e}")
             response = "❌ **အလုပ်ချိန်ပန်းတိုင်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
             await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+    async def handle_preset_time(self, query, context: ContextTypes.DEFAULT_TYPE, callback_data: str) -> None:
+        """Handle preset time button selections."""
+        user_id = str(query.from_user.id)
+        
+        try:
+            # Define preset times
+            presets = {
+                "preset_c341": ("08:30", "17:30", "C341 Day Shift"),
+                "preset_c342": ("16:45", "01:25", "C342 Night Shift"),
+                "preset_8to5": ("08:00", "17:00", "8AM to 5PM"),
+                "preset_9to6": ("09:00", "18:00", "9AM to 6PM"),
+                "preset_2to11": ("14:00", "23:00", "2PM to 11PM"),
+                "preset_10to7": ("22:00", "07:00", "10PM to 7AM")
+            }
+            
+            if callback_data not in presets:
+                await query.edit_message_text("❌ **မမှားများသောရွေးချယ်မှု**", parse_mode='Markdown')
+                return
+            
+            start_time_str, end_time_str, preset_name = presets[callback_data]
+            
+            # Calculate salary using the preset times
+            result = self.calculator.calculate_salary(start_time_str, end_time_str)
+
+            if result['error']:
+                response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+                await query.edit_message_text(response, parse_mode='Markdown')
+                return
+
+            # Save calculation data
+            calculation_saved = self.storage.save_calculation(user_id, result)
+
+            # Format response in Burmese
+            response = self.formatter.format_salary_response(result)
+            
+            # Add preset confirmation
+            response = f"""✅ **{preset_name} သတ်မှတ်မှုအောင်မြင်သည်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{response}
+
+💡 **နောက်တစ်ကြိမ် အချိန်သတ်မှတ်ရန်** ⏰ အချိန်သတ်မှတ် ခလုတ်ကို နှိပ်ပါ"""
+
+            await query.edit_message_text(response, parse_mode='Markdown')
+
+        except Exception as e:
+            logger.error(f"Error handling preset time: {e}")
+            await query.edit_message_text("❌ **အချိန်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**", parse_mode='Markdown')
+
+    async def handle_time_set_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
+        """Handle time setting commands with AM/PM format."""
+        user_id = str(update.effective_user.id)
+        keyboard = self.get_main_keyboard()
+
+        try:
+            # Parse command: "Set 08:30 AM To 05:30 PM"
+            user_input = user_input.replace("Set ", "").strip()
+            
+            # Handle shift codes
+            if user_input in ["C341", "c341"]:
+                start_time_str = "08:30"
+                end_time_str = "17:30"
+            elif user_input in ["C342", "c342"]:
+                start_time_str = "16:45"
+                end_time_str = "01:25"
+            else:
+                # Parse AM/PM or 24-hour format
+                if " To " in user_input:
+                    start_part, end_part = user_input.split(" To ")
+                    start_time_str = self.convert_ampm_to_24h(start_part.strip())
+                    end_time_str = self.convert_ampm_to_24h(end_part.strip())
+                    
+                    if not start_time_str or not end_time_str:
+                        response = """❌ **အချိန်ပုံစံမှားနေပါသည်**
+
+💡 **မှန်ကန်သောပုံစံများ:**
+• `Set 08:30 AM To 05:30 PM`
+• `Set 16:45 To 01:25`
+• `Set C341` သို့မဟုတ် `Set C342`
+
+ဥပမာ: `Set 09:00 AM To 06:00 PM`"""
+                        await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                        return
+                else:
+                    response = """❌ **ပုံစံမှားနေပါသည်**
+
+💡 **မှန်ကန်သောပုံစံ:**
+`Set [Start Time] To [End Time]`
+
+ဥပမာ: `Set 08:30 AM To 05:30 PM`"""
+                    await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                    return
+
+            # Calculate salary using the parsed times
+            result = self.calculator.calculate_salary(start_time_str, end_time_str)
+
+            if result['error']:
+                response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                return
+
+            # Save calculation data
+            calculation_saved = self.storage.save_calculation(user_id, result)
+
+            # Format response in Burmese
+            response = self.formatter.format_salary_response(result)
+            
+            # Add set time confirmation
+            response = f"""✅ **အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{response}
+
+💡 **နောက်တစ်ကြိမ် Set လုပ်ရန်** ⏰ အချိန်သတ်မှတ် ခလုတ်ကို နှိပ်ပါ"""
+
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+        except Exception as e:
+            logger.error(f"Error handling time set command: {e}")
+            response = "❌ **အချိန်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+    def convert_ampm_to_24h(self, time_str: str) -> str:
+        """Convert AM/PM time to 24-hour format."""
+        try:
+            time_str = time_str.strip()
+            
+            # If already in 24-hour format (no AM/PM), return as is
+            if "AM" not in time_str.upper() and "PM" not in time_str.upper():
+                # Validate 24-hour format
+                if ":" in time_str:
+                    hour, minute = map(int, time_str.split(':'))
+                    if 0 <= hour <= 23 and 0 <= minute <= 59:
+                        return time_str
+                return None
+            
+            # Parse AM/PM format
+            if time_str.upper().endswith(' AM'):
+                time_part = time_str[:-3].strip()
+                hour, minute = map(int, time_part.split(':'))
+                
+                # Convert 12 AM to 00
+                if hour == 12:
+                    hour = 0
+                elif hour > 12:
+                    return None
+                    
+            elif time_str.upper().endswith(' PM'):
+                time_part = time_str[:-3].strip()
+                hour, minute = map(int, time_part.split(':'))
+                
+                # Don't convert 12 PM
+                if hour != 12:
+                    if hour > 12:
+                        return None
+                    hour += 12
+            else:
+                return None
+            
+            # Validate time
+            if 0 <= hour <= 23 and 0 <= minute <= 59:
+                return f"{hour:02d}:{minute:02d}"
+            else:
+                return None
+                
+        except (ValueError, IndexError):
+            return None
 
     async def handle_text_commands(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
         """Handle text-based commands like CSV export, delete, etc."""
