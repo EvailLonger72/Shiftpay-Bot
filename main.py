@@ -90,42 +90,115 @@ class SalaryTelegramBot:
         await update.message.reply_text(welcome_message, parse_mode='Markdown', reply_markup=keyboard)
 
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Send help message."""
-        help_message = """📚 **အသေးစိတ်လမ်းညွှန်** / **Detailed Guide**
+        """Send comprehensive help message."""
+        help_message = """📚 **လစာတွက်ချက်ဘော့် - အသေးစိတ်လမ်းညွှန်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **⏰ အချိန်ပုံစံများ / Time Formats:**
-• `08:30 ~ 17:30` (စချိန် ~ ဆုံးချိန်)
-• `2025-07-15 08:30 ~ 17:30` (နေ့စွဲအတွက်)
 
-**🚀 မြန်နည်းလမ်းများ / Quick Commands:**
+• `08:30 ~ 17:30` (ပုံမှန်ပုံစံ)
+• `2025-07-15 08:30 ~ 17:30` (နေ့စွဲပါပုံစံ)
 • `C341` = Day Shift (08:30 ~ 17:30)
 • `C342` = Night Shift (16:45 ~ 01:25)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🚀 မြန်နည်းလမ်းများ / Quick Commands:**
+
+**🎯 ပန်းတိုင်များ:**
 • `ပန်းတိုင် 300000` = လစာပန်းတိုင်သတ်မှတ်
 • `ချိန်ပန်းတိုင် 180` = အလုပ်ချိန်ပန်းတိုင်သတ်မှတ်
+
+**📤 Export နှင့် Import:**
 • `CSV ပို့မယ်` = CSV ဖိုင်ပို့မှု
 • `JSON ပို့မယ်` = JSON ဖိုင်ပို့မှု
-• `အားလုံးဖျက်မယ်` = ဒေတာအားလုံးဖျက်မှု
+• `လစဉ်အစီရင်ခံစာ` = လစဉ်ခွဲခြမ်းစိတ်ဖြာမှု
 
-**📅 ပြက္ခဒိန် / Calendar:**
-• `ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ` = ပွဲအစီအစဉ်ထည့်
-• `လစာရက် 25` = လစာထုတ်ရက်သတ်မှတ်
+**🗑️ ဒေတာဖျက်မှု:**
+• `အားလုံးဖျက်မယ်` = ဒေတာအားလုံးဖျက်မှု
+• `ဟောင်းဒေတာဖျက်မယ်` = ပုံမှန်ရက်ဟောင်းများဖျက်မှု
+
+**📅 ပြက္ခဒိန်နှင့် ပွဲအစီအစဉ်:**
+• `ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ` = ပွဲအစီအစဉ်ထည့်သွင်းမှု
+• `လစာရက် 25` = လစာထုတ်ရက်သတ်မှတ်မှု
+
+**🔔 သတိပေးချက်များ:**
+• `သတိပေး 08:00` = နေ့စဉ်သတိပေးချက်သတ်မှတ်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **🏭 Shift အချက်အလက်များ:**
 
 **C341 - Day Shift (08:30 ~ 17:30)**
-Break များ: 08:30~08:40, 10:40~11:25, 13:05~13:15, 14:35~14:45, 16:10~16:20, 17:20~17:35
+• 🕰️ လုပ်ငန်းချိန်: 08:30 မှ 17:30 အထိ
+• ⏸️ Break များ: 08:30~08:40, 10:40~11:25, 13:05~13:15, 14:35~14:45, 16:10~16:20, 17:20~17:35
+• 💰 လစာနှုန်း: ¥2,100/နာရီ (ပုံမှန်), ¥2,100/နာရီ (OT)
 
-**C342 - Night Shift (16:45 ~ 01:25)**  
-Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02:35, 03:35~03:50
+**C342 - Night Shift (16:45 ~ 01:25)**
+• 🌙 လုပ်ငန်းချိန်: 16:45 မှ 01:25 အထိ (နောက်တစ်ရက်)
+• ⏸️ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02:35, 03:35~03:50
+• 💰 လစာနှုန်း: ¥2,100/နာရီ (ပုံမှန်), ¥2,625/နာရီ (Night OT)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **💰 လစာတွက်ချက်နည်း:**
-• 7h35m အထိ = ¥2,100/နာရီ (ပုံမှန်)
-• ကျော်လွန်ရင် = ¥2,100/နာရီ (OT)  
-• 22:00 နောက်ပိုင်း = ¥2,625/နာရီ (Night OT)
 
-**🌐 Language Options:**
-• မြန်မာ (Burmese) - Default
-• English - Available"""
+**ပုံမှန်နာရီများ:**
+• 7h35m အထိ = ¥2,100/နာရီ
+• 7h35m ကျော်လွန်ချက် = OT အဖြစ်သတ်မှတ်
+
+**Overtime (OT) နာရီများ:**
+• နေ့ပိုင်း OT = ¥2,100/နာရီ
+• ညပိုင်း OT (22:00 နောက်) = ¥2,625/နာရီ
+
+**အပိုထည့်သွင်းချက်များ:**
+• Break အချိန်များကို အလိုအလျောက် နုတ်သည်
+• နေ့လွန်အလုပ်ကို နေ့သစ်တွင် တွက်ချက်သည်
+• အထူးရက်များအတွက် ဘောနပ်စ် (လိုအပ်ရင်)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**📊 အင်္ဂါရပ်များနှင့် လုပ်ဆောင်ချက်များ:**
+
+**ခွဲခြမ်းစိတ်ဖြာမှု:**
+• နေ့စဉ်/လစဉ် ခွဲခြမ်းမှု
+• Trend Analysis နှင့် ပုံစံများ
+• စွမ်းအားကျဆင်းမှု သတိပေးချက်
+
+**ပုံရိပ်ပြမှု:**
+• နေ့စဉ် လုပ်ငန်းချိန် Bar Chart
+• လစဉ် လစာ Progress Chart
+• ပန်းတိုင်နှင့် လက်ရှိအခြေအနေ နှိုင်းယှဉ်မှု
+
+**Export အင်္ဂါရပ်များ:**
+• CSV ဖိုင် (Excel အတွက်)
+• JSON ဖိုင် (Programming အတွက်)
+• PDF အစီရင်ခံစာ (လာမည့်ဗားရှင်းတွင်)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🌐 Language Support:**
+• 🇲🇲 မြန်မာ (Burmese) - Primary
+• 🇬🇧 English - Available
+• 🇯🇵 日本語 - Coming Soon
+
+**📞 ကူညီမှုနှင့် အကြံပြုချက်များ:**
+• Bot အတွင်းမှ Help Menu များ
+• Quick Start Guide
+• FAQ များ (/faq လာမည်)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🔥 အကောင်းဆုံး အလေ့အကျင့်များ:**
+
+1. **နေ့စဉ် မှတ်သားခြင်း:** အလုပ်ပြီးတိုင်း ချက်ချင်း ထည့်ပါ
+2. **ပန်းတိုင်သတ်မှတ်ခြင်း:** လစဉ် ပန်းတိုင်များ သတ်မှတ်ပါ
+3. **Export လုပ်ခြင်း:** လစဉ် backup လုပ်ထားပါ
+4. **Calendar အသုံးပြုခြင်း:** အရေးကြီးရက်များ မှတ်သားပါ
+5. **Analytics ကြည့်ရှုခြင်း:** စွမ်းအားကို နေ့စဉ် စစ်ဆေးပါ
+
+💡 **နောက်ထပ်မေးခွန်းများ ရှိပါက keyboard menu များမှတစ်ဆင့် အလွယ်တကူ လုပ်ဆောင်နိုင်ပါသည်။**"""
 
         keyboard = self.get_main_keyboard()
         await update.message.reply_text(help_message, parse_mode='Markdown', reply_markup=keyboard)
@@ -577,43 +650,138 @@ Export လုပ်ပြီးမှ ဖျက်သင့်ပါသလား
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "delete_menu":
-                # Show delete options with enhanced styling
+                # Show delete options with enhanced styling and more options
                 keyboard = [
-                    [InlineKeyboardButton("⚠️ အားလုံးဖျက်မည် ⚠️", callback_data="delete_all")],
-                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="back_to_main")]
+                    [
+                        InlineKeyboardButton("📤 Export ပြီးမှ ဖျက်မယ်", callback_data="export_then_delete"),
+                        InlineKeyboardButton("📊 ဒေတာအချက်အလက်", callback_data="data_info")
+                    ],
+                    [
+                        InlineKeyboardButton("🗓️ တစ်လဟောင်းဒေတာ", callback_data="delete_old_month"),
+                        InlineKeyboardButton("📅 တစ်ပတ်ဟောင်းဒေတာ", callback_data="delete_old_week")
+                    ],
+                    [
+                        InlineKeyboardButton("🎯 ပန်းတိုင်ဖျက်မယ်", callback_data="delete_goals"),
+                        InlineKeyboardButton("📋 မှတ်တမ်းဖျက်မယ်", callback_data="delete_history")
+                    ],
+                    [
+                        InlineKeyboardButton("💥 အားလုံးဖျက်မယ် ⚠️", callback_data="delete_all_confirm")
+                    ],
+                    [
+                        InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="back_to_main")
+                    ]
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
 
-                response = """🗑️ **ဒေတာဖျက်မှုမီနူး**
+                # Get user data summary for display
+                user_data_summary = self.storage.get_user_data_summary(user_id)
+
+                response = f"""🗑️ **ဒေတာဖျက်မှုဌာန**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 **လက်ရှိဒေတာအခြေအနေ:**
+• 📋 လုပ်ငန်းမှတ်တမ်း: {user_data_summary.get('total_records', 0)} ရေကောင်
+• 🗓️ အလုပ်လုပ်ရက်: {user_data_summary.get('total_days', 0)} ရက်
+• 🎯 သတ်မှတ်ပန်းတိုင်: {user_data_summary.get('active_goals', 0)} ခု
+• 📅 ပွဲအစီအစဉ်: {user_data_summary.get('events', 0)} ခု
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ⚠️ **အရေးကြီးသတိပေးချက်** ⚠️
 
-🔴 **သတိ:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
-🔴 **သတိ:** လုပ်ငန်းမှတ်တမ်းအားလုံး ပျောက်သွားမည်
-🔴 **သတိ:** ဤလုပ်ဆောင်ချက်ကို ပြန်ပြေးမရပါ
+🔒 **လုံခြုံမှု:** Export လုပ်ပြီးမှ ဖျက်ရန် အကြံပြုပါသည်
+🔄 **ရွေးချယ်မှု:** တစ်စိတ်တစ်ပိုင်း သို့မဟုတ် အားလုံးဖျက်နိုင်
+⏰ **ချိန်ရွေးချယ်:** ဟောင်းဒေတာများကိုသာ ဖျက်နိုင်
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💭 **စဉ်းစားကြည့်ပါ:** ဒေတာများကို မဖျက်မီ export လုပ်ထားသင့်ပါသလား?
-
-မည်သည့်အရာကို ဖျက်လိုပါသလဲ?"""
+မည်သည့်ရွေးချယ်မှုကို လုပ်လိုပါသလဲ?"""
 
                 await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
 
-            elif callback_data == "delete_all":
-                # Delete all user data
-                success = self.storage.delete_user_data(user_id)
+            elif callback_data == "export_then_delete":
+                # Export data first, then show delete options
+                keyboard = [
+                    [
+                        InlineKeyboardButton("📊 CSV Export ပြီး ဖျက်မယ်", callback_data="csv_then_delete"),
+                        InlineKeyboardButton("📄 JSON Export ပြီး ဖျက်မယ်", callback_data="json_then_delete")
+                    ],
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="delete_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
 
-                if success:
-                    response = """🗑️ **ဖျက်မှုအောင်မြင်သည်**
+                response = """📤🗑️ **Export ပြီးမှ ဖျက်မှု**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ သင့်ဒေတာအားလုံး ဖျက်ပြီးပါပြီ
-🔄 စနစ်သစ်စတင်ရန် အသင့်ရှိပါပြီ
-📱 နောက်တစ်ကြိမ် အချိန်ထည့်ပြီး စတင်နိုင်ပါပြီ
+🔒 **လုံခြုံသောနည်းလမ်း:** ဒေတာများကို အရင် backup လုပ်ပြီးမှ ဖျက်ပါ
+
+📋 **လုပ်ဆောင်ချက်များ:**
+1. လက်ရှိဒေတာများကို Export လုပ်မည်
+2. ဖိုင်ကို သင့်ထံ ပို့မည်
+3. အတည်ပြုပြီးမှ ဒေတာဖျက်မည်
+
+🎯 **အကြံပြုချက်:** CSV ဖိုင်သည် Excel တွင် ဖွင့်ရလွယ်ပါသည်
+
+မည်သည့်ပုံစံဖြင့် Export လုပ်လိုပါသလဲ?"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "data_info":
+                # Show detailed data information
+                user_data_summary = self.storage.get_user_data_summary(user_id)
+                keyboard = [
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="delete_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                response = f"""📊 **ဒေတာအသေးစိတ်အချက်အလက်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 **လုပ်ငန်းမှတ်တမ်း:**
+• စုစုပေါင်း: {user_data_summary.get('total_records', 0)} ရေကောင်
+• ပထမဆုံးမှတ်တမ်း: {user_data_summary.get('first_record', 'မရှိ')}
+• နောက်ဆုံးမှတ်တမ်း: {user_data_summary.get('last_record', 'မရှိ')}
+
+🗓️ **ကာလအချက်အလက်:**
+• အလုပ်လုပ်ရက်: {user_data_summary.get('total_days', 0)} ရက်
+• လစဉ်ပျမ်းမျှ: {user_data_summary.get('monthly_avg_days', 0)} ရက်
+
+🎯 **ပန်းတိုင်များ:**
+• လက်ရှိလုပ်ဆောင်နေသော: {user_data_summary.get('active_goals', 0)} ခု
+• ပြီးမြောက်သော: {user_data_summary.get('completed_goals', 0)} ခု
+
+📅 **ပွဲအစီအစဉ်များ:**
+• လက်ရှိပွဲများ: {user_data_summary.get('events', 0)} ခု
+
+💾 **ခန့်မှန်းဖိုင်အရွယ်အစား:**
+• CSV: ~{user_data_summary.get('estimated_csv_size', '1KB')}
+• JSON: ~{user_data_summary.get('estimated_json_size', '2KB')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "delete_old_month":
+                # Delete data older than 1 month
+                success = self.storage.delete_old_data(user_id, 30)
+                keyboard = [
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="delete_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                if success:
+                    response = """🗓️ **တစ်လဟောင်းဒေတာ ဖျက်ပြီးပါပြီ**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **အောင်မြင်မှု:** ၃၀ ရက်ထက်ပိုဟောင်းသော ဒေတာများ ဖျက်ပြီး
+🔄 **ရလဒ်:** လက်ရှိလ ဒေတာများ ကျန်ရှိနေပါသည်
+💾 **နေရာ:** စတိုရေ့ချ် နေရာလွတ်ရရှိပါပြီ
+
+🎯 **အကြံပြုချက်:** နောက်လ Export လုပ်ပြီးမှ ဖျက်ပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                 else:
@@ -621,9 +789,166 @@ Export လုပ်ပြီးမှ ဖျက်သင့်ပါသလား
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔴 ဒေတာဖျက်ရာတွင် အမှားရှိခဲ့သည်
-🔄 ကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ
-📞 ပြဿနာဆက်ရှိပါက ထောက်ပံ့မှုဖြင့် ဆက်သွယ်ပါ
+🔴 **အမှား:** ဟောင်းဒေတာဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်
+💡 **ဖြေရှင်းနည်း:** ထပ်မံကြိုးစားပါ သို့မဟုတ် ကူညီမှုရယူပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "delete_old_week":
+                # Delete data older than 1 week
+                success = self.storage.delete_old_data(user_id, 7)
+                keyboard = [
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="delete_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                if success:
+                    response = """📅 **တစ်ပတ်ဟောင်းဒေတာ ဖျက်ပြီးပါပြီ**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **အောင်မြင်မှု:** ၇ ရက်ထက်ပိုဟောင်းသော ဒေတာများ ဖျက်ပြီး
+🔄 **ရလဒ်:** ယခုပတ် ဒေတာများ ကျန်ရှိနေပါသည်
+💾 **နေရာ:** စတိုရေ့ချ် နေရာလွတ်ရရှိပါပြီ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = """❌ **ဖျက်မှုမအောင်မြင်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 **အမှား:** ဟောင်းဒေတာဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်
+💡 **ဖြေရှင်းနည်း:** ထပ်မံကြိုးစားပါ သို့မဟုတ် ကူညီမှုရယူပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "delete_goals":
+                # Delete goals only
+                success = self.goal_tracker.delete_all_goals(user_id)
+                keyboard = [
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="delete_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                if success:
+                    response = """🎯 **ပန်းတိုင်များ ဖျက်ပြီးပါပြီ**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **အောင်မြင်မှု:** သတ်မှတ်ပန်းတိုင်များ အားလုံး ဖျက်ပြီး
+🔄 **ရလဒ်:** အလုပ်မှတ်တမ်းများ မပျက်ပါ
+🎯 **သတိ:** ပန်းတိုင်အသစ်များ ပြန်သတ်မှတ်နိုင်ပါသည်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = """❌ **ပန်းတိုင်ဖျက်မှု မအောင်မြင်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 **အမှား:** ပန်းတိုင်ဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်
+💡 **ဖြေရှင်းနည်း:** ထပ်မံကြိုးစားပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "delete_history":
+                # Delete work history only
+                success = self.storage.delete_work_history(user_id)
+                keyboard = [
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="delete_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                if success:
+                    response = """📋 **အလုပ်မှတ်တမ်း ဖျက်ပြီးပါပြီ**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **အောင်မြင်မှု:** အလုပ်ချိန်မှတ်တမ်းများ အားလုံး ဖျက်ပြီး
+🔄 **ရလဒ်:** ပန်းတိုင်နှင့် ပွဲအစီအစဉ်များ မပျက်ပါ
+📱 **သတိ:** ယခုမှ အလုပ်ချိန်အသစ် စတင်နိုင်ပါသည်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = """❌ **မှတ်တမ်းဖျက်မှု မအောင်မြင်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 **အမှား:** မှတ်တမ်းဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်
+💡 **ဖြေရှင်းနည်း:** ထပ်မံကြိုးစားပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "delete_all_confirm":
+                # Show final confirmation for deleting all data
+                keyboard = [
+                    [
+                        InlineKeyboardButton("💥 ဟုတ်ကဲ့ အားလုံးဖျက်မယ်", callback_data="delete_all_final"),
+                        InlineKeyboardButton("❌ မဖျက်တော့ပါ", callback_data="delete_menu")
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                response = """💥 **နောက်ဆုံးအတည်ပြုချက်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ **အန္တရာယ်ကြီးမားသော လုပ်ဆောင်ချက်** ⚠️
+
+🔴 **သင် ဖျက်တော့မည့်အရာများ:**
+• 📋 အလုပ်မှတ်တမ်းအားလုံး
+• 🎯 ပန်းတိုင်များအားလုံး  
+• 📅 ပွဲအစီအစဉ်များအားလုံး
+• 🔔 သတိပေးချက်များအားလုံး
+• 📊 ခွဲခြမ်းစိတ်ဖြာမှုဒေတာများ
+
+🚨 **သတိပေးချက်များ:**
+• ဤလုပ်ဆောင်ချက်ကို ပြန်ပြေးမရပါ
+• Export လုပ်ထားခြင်း မရှိပါက ဒေတာများ လုံးဝပျောက်သွားမည်
+• စနစ်သည် စတင်အခြေအနေသို့ ပြန်သွားမည်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💭 **နောက်ဆုံးမေးခွန်း:** သေချာပါသလား?"""
+
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+
+            elif callback_data == "delete_all_final":
+                # Final delete all user data
+                success = self.storage.delete_user_data(user_id)
+
+                if success:
+                    response = """🗑️ **အားလုံးဖျက်မှု အောင်မြင်သည်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ **ပြီးမြောက်မှု:** သင့်ဒေတာအားလুံး ဖျက်ပြီးပါပြီ
+🔄 **စနစ်အခြေအနေ:** စတင်အခြေအနေသို့ ပြန်သွားပါပြီ
+📱 **နောက်ထပ်လုပ်ရမည်:** အချိန်ထည့်ပြီး စတင်နိုင်ပါပြီ
+
+🎉 **လက်ရှိအခြေအနေ:** 
+• မှတ်တမ်းများ: 0 ရေကောင်
+• ပန်းတိုင်များ: 0 ခု
+• ပွဲအစီအစဉ်များ: 0 ခု
+
+💪 **စတင်လိုက်ပါ!** အလုပ်ချိန်ပထမဆုံး ထည့်ကြည့်ပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = """❌ **အားလုံးဖျက်မှု မအောင်မြင်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 **အမှား:** ဒေတာဖျက်ရာတွင် စနစ်ပြဿနာရှိခဲ့သည်
+🔄 **ကြိုးစားချက်:** ထပ်မံကြိုးစားပါ သို့မဟုတ် Bot restart လုပ်ပါ
+📞 **ကူညီမှု:** ပြဿနာဆက်ရှိပါက ထောက်ပံ့မှုဖြင့် ဆက်သွယ်ပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 

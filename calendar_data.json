@@ -1,5 +1,18 @@
 {
-  "users": {},
+  "users": {
+    "1867166899": {
+      "events": [
+        {
+          "id": "1867166899_2025-07-11_0",
+          "date": "2025-07-11",
+          "type": "custom",
+          "description": "08:30 ~ 17:30",
+          "reminder_time": null,
+          "created_at": "2025-07-08T07:00:52.718658"
+        }
+      ]
+    }
+  },
   "salary_payment_day": 25,
   "global_events": []
 }

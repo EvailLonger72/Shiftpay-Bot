@@ -180,7 +180,7 @@ class DataStorage:
             return {'calculations': {}}
 
     def delete_user_data(self, user_id: str) -> bool:
-        """Delete all data for a user."""
+        """Delete all data for a specific user."""
         try:
             with open(self.data_file, 'r', encoding='utf-8') as f:
                 all_data = json.load(f)
@@ -199,6 +199,35 @@ class DataStorage:
             logger.error(f"Error deleting user data: {e}")
             return False
 
+    def delete_old_data(self, user_id: str, days: int) -> bool:
+        """Delete data older than specified days."""
+        try:
+            user_data = self.load_user_data(user_id)
+
+            if not user_data:
+                return True
+
+            cutoff_date = (datetime.now() - timedelta(days=days)).date()
+
+            # Filter out old data
+            dates_to_delete = []
+            for date_str in user_data.keys():
+                try:
+                    data_date = datetime.fromisoformat(date_str).date()
+                    if data_date < cutoff_date:
+                        dates_to_delete.append(date_str)
+                except ValueError:
+                    continue
+
+            # Delete old dates
+            for date_str in dates_to_delete:
+                del user_data[date_str]
+
+            return self.save_user_data(user_id, user_data)
+        except Exception as e:
+            logger.error(f"Error deleting old data: {e}")
+            return False
+
     def delete_date_data(self, user_id: str, date_str: str) -> bool:
         """Delete data for a specific date."""
         try:
@@ -213,6 +242,90 @@ class DataStorage:
         except Exception as e:
             logger.error(f"Error deleting date data: {e}")
             return False
+
+    def delete_work_history(self, user_id: str) -> bool:
+        """Delete only work history, keep other data."""
+        try:
+            user_data = self.load_user_data(user_id)
+
+            # Clear the work history by setting the user's data to an empty dictionary.
+            user_data = {}
+            return self.save_user_data(user_id, user_data)
+
+        except Exception as e:
+            logger.error(f"Error deleting work history: {e}")
+            return False
+
+    def get_user_data_summary(self, user_id: str) -> dict:
+        """Get summary of user data for display."""
+        try:
+            user_data = self.load_user_data(user_id)
+
+            if not user_data:
+                return {
+                    'total_records': 0,
+                    'total_days': 0,
+                    'first_record': None,
+                    'last_record': None,
+                    'active_goals': 0,
+                    'completed_goals': 0,
+                    'events': 0,
+                    'monthly_avg_days': 0,
+                    'estimated_csv_size': '0KB',
+                    'estimated_json_size': '0KB'
+                }
+
+            total_records = sum(len(day_data) for day_data in user_data.values())
+            total_days = len(user_data)
+
+            # Get date range
+            dates = list(user_data.keys())
+            first_record = min(dates) if dates else None
+            last_record = max(dates) if dates else None
+
+            # Estimate file sizes
+            estimated_csv_size = f"{total_records * 150}B"
+            estimated_json_size = f"{total_records * 300}B"
+
+            # Calculate monthly average
+            if dates:
+                try:
+                    first_date = datetime.fromisoformat(first_record).date()
+                    last_date = datetime.fromisoformat(last_record).date()
+                    days_diff = (last_date - first_date).days + 1
+                    monthly_avg = (total_days / days_diff * 30) if days_diff > 0 else total_days
+                except:
+                    monthly_avg = 0
+            else:
+                monthly_avg = 0
+
+            return {
+                'total_records': total_records,
+                'total_days': total_days,
+                'first_record': first_record,
+                'last_record': last_record,
+                'active_goals': 0,  # Will be filled by goal_tracker if needed
+                'completed_goals': 0,
+                'events': 0,  # Will be filled by calendar_manager if needed
+                'monthly_avg_days': round(monthly_avg, 1),
+                'estimated_csv_size': estimated_csv_size,
+                'estimated_json_size': estimated_json_size
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting user data summary: {e}")
+            return {
+                'total_records': 0,
+                'total_days': 0,
+                'first_record': None,
+                'last_record': None,
+                'active_goals': 0,
+                'completed_goals': 0,
+                'events': 0,
+                'monthly_avg_days': 0,
+                'estimated_csv_size': '0KB',
+                'estimated_json_size': '0KB'
+            }
 
 # Import timedelta
 from datetime import timedelta
