@@ -712,7 +712,7 @@ class SalaryTelegramBot:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                 else:
                     # Create comprehensive dashboard
-                    ```pythonresponse = f"""📊 **DASHBOARD - လစာခွဲခြမ်းစိတ်ဖြာမှု**
+                    response = f"""📊 **DASHBOARD - လစာခွဲခြမ်းစိတ်ဖြာမှု**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
