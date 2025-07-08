@@ -2,7 +2,7 @@ import os
 import logging
 from datetime import datetime
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from salary_calculator import SalaryCalculator
 from burmese_formatter import BurmeseFormatter
 
@@ -25,7 +25,7 @@ class SalaryTelegramBot:
         self.application.add_handler(CommandHandler("help", self.help))
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_time_input))
     
-    async def start(self, update: Update, context: CallbackContext) -> None:
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Send a message when the command /start is issued."""
         welcome_message = """🤖 **လစာတွက်ချက်စက်ရုံ**
 
@@ -48,7 +48,7 @@ class SalaryTelegramBot:
         
         await update.message.reply_text(welcome_message, parse_mode='Markdown')
     
-    async def help(self, update: Update, context: CallbackContext) -> None:
+    async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Send help message."""
         help_message = """📚 **အသေးစိတ်လမ်းညွှန်**
 
@@ -80,7 +80,7 @@ Break များ:
         
         await update.message.reply_text(help_message, parse_mode='Markdown')
     
-    async def handle_time_input(self, update: Update, context: CallbackContext) -> None:
+    async def handle_time_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle time input from user."""
         try:
             user_input = update.message.text.strip()

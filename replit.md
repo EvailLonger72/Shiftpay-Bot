@@ -97,6 +97,23 @@ This is a Telegram bot that calculates daily salary for factory workers in Myanm
 
 ## Changelog
 - July 08, 2025. Initial setup
+- July 08, 2025. Completed fully functional Telegram bot with salary calculations
+
+## Recent Changes (July 08, 2025)
+✓ Implemented complete Telegram bot with Burmese language support
+✓ Added comprehensive salary calculation logic with shift detection
+✓ Integrated break time deduction system for C341 and C342 shifts
+✓ Built overtime and night overtime calculation system
+✓ Created visual timeline diagrams for work periods
+✓ Successfully deployed bot with token: 7786072573:AAE7v8hnE-tfDntqURH9QnbvM3HdAw-umv8
+
+## Key Features Implemented
+- Automatic shift detection (C341 Day/C342 Night)
+- Break time overlap calculation and deduction
+- Proper overtime splitting (regular/night rates)
+- Burmese language formatting for all responses
+- Visual work/break timeline diagrams
+- Error handling for invalid inputs
 
 ## User Preferences
 

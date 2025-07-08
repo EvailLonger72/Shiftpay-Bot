@@ -21,4 +21,4 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pip install python-telegram-bot && python main.py"
+args = "python main.py"
