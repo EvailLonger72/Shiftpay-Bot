@@ -2091,10 +2091,10 @@ class SalaryTelegramBot:
             user_input = user_input.replace("Set ", "").strip()
 
             # Handle shift codes
-            if user_input in ["C341", "c341"]:
+            if user_input.upper() in ["C341"]:
                 start_time_str = "08:30"
                 end_time_str = "17:30"
-            elif user_input in ["C342", "c342"]:
+            elif user_input.upper() in ["C342"]:
                 start_time_str = "16:45"
                 end_time_str = "01:25"
             else:
@@ -2109,7 +2109,7 @@ class SalaryTelegramBot:
 
 💡 **မှန်ကန်သောပုံစံများ:**
 • `Set 08:30 AM To 05:30 PM`
-• `Set 16:45 To 01:25`
+• `Set 16:35 To 02:50` (Night Shift)
 • `Set C341` သို့မဟုတ် `Set C342`
 
 ဥပမာ: `Set 09:00 AM To 06:00 PM`"""
@@ -2121,7 +2121,8 @@ class SalaryTelegramBot:
 💡 **မှန်ကန်သောပုံစံ:**
 `Set [Start Time] To [End Time]`
 
-ဥပမာ: `Set 08:30 AM To 05:30 PM`"""
+🌙 **Night Shift ဥပမာ:** `Set 16:35 To 02:50`
+🌅 **Day Shift ဥပမာ:** `Set 08:30 To 17:30`"""
                     await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
                     return
 
@@ -2139,12 +2140,27 @@ class SalaryTelegramBot:
             # Format response in Burmese
             formatted_response = self.formatter.format_salary_response(result)
 
-            # Add set time confirmation
-            response = f"""✅ **အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
+            # Detect if this is night shift (crosses midnight)
+            try:
+                from datetime import datetime
+                start_dt = datetime.strptime(start_time_str, "%H:%M")
+                end_dt = datetime.strptime(end_time_str, "%H:%M")
+                
+                is_night_shift = (start_dt.hour >= 16) or (end_dt.hour <= 8)
+                shift_type = "Night Shift" if is_night_shift else "Day Shift"
+            except:
+                shift_type = "Work Shift"
+
+            # Add set time confirmation with night shift note
+            night_note = ""
+            if is_night_shift and result.get('night_ot_minutes', 0) > 0:
+                night_note = "\n🌙 **Night Shift သတိ**: နောက်နေ့ရောက်သောကြောင့် OT အားလုံး ¥2,625/နာရီ နှုন်းဖြင့် တွက်ချက်ပြီး"
+
+            response = f"""✅ **{shift_type} အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{formatted_response}
+{formatted_response}{night_note}
 
 💡 **နောက်တစ်ကြိမ် Set လုပ်ရန်** ⏰ အချိန်သတ်မှတ် ခလုတ်ကို နှိပ်ပါ"""
 
@@ -2152,7 +2168,7 @@ class SalaryTelegramBot:
 
         except Exception as e:
             logger.error(f"Error handling time set command: {e}")
-            response = "❌ **အချိန်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
+            response = "❌ **အချိန်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
             await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
     async def handle_shift_calculation(self, query, context: ContextTypes.DEFAULT_TYPE, start_time: str, end_time: str, shift_name: str) -> None:
