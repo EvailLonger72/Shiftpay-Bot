@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from salary_calculator import SalaryCalculator
@@ -219,17 +219,31 @@ class SalaryTelegramBot:
                 await self.handle_keyboard_button(update, context, user_input)
                 return
 
-            # Handle calendar and schedule commands
+            # Handle special commands first
             if user_input.startswith("ပွဲ "):
                 await self.handle_calendar_command(update, context, user_input)
                 return
             elif user_input.startswith("လစာရက် "):
                 await self.handle_salary_date_command(update, context, user_input)
                 return
+            elif user_input.startswith("ပန်းတိုင် "):
+                await self.handle_goal_command(update, context, user_input)
+                return
+            elif user_input.startswith("ချိန်ပန်းတိုင် "):
+                await self.handle_hours_goal_command(update, context, user_input)
+                return
+            elif user_input in ["CSV ပို့မယ်", "JSON ပို့မယ်", "အားလုံးဖျက်မယ်"]:
+                await self.handle_text_commands(update, context, user_input)
+                return
 
             # Parse time input
             if '~' not in user_input:
-                await update.message.reply_text("❌ **အမှားရှိသည်**\n\nဥပမာ: 08:30 ~ 17:30", parse_mode='Markdown')
+                keyboard = self.get_main_keyboard()
+                await update.message.reply_text(
+                    "❌ **အမှားရှိသည်**\n\nဥပမာ: 08:30 ~ 17:30\nသို့မဟုတ် C341, C342", 
+                    parse_mode='Markdown', 
+                    reply_markup=keyboard
+                )
                 return
 
             start_time_str, end_time_str = user_input.split('~')
@@ -1075,15 +1089,16 @@ class SalaryTelegramBot:
 
             elif callback_data == "export_csv":
                 # Export to CSV with enhanced styling
-                csv_data = self.export_manager.export_to_csv(user_id, 30)
+                try:
+                    csv_data = self.export_manager.export_to_csv(user_id, 30)
 
-                if csv_data:
-                    # Save to file and send
-                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.csv"
-                    with open(filename, 'w', encoding='utf-8') as f:
-                        f.write(csv_data)
+                    if csv_data and csv_data.strip():
+                        # Save to file and send
+                        filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.csv"
+                        with open(filename, 'w', encoding='utf-8-sig') as f:
+                            f.write(csv_data)
 
-                    response = f"""📊 **CSV ဖိုင်ပို့မှုအောင်မြင်သည်**
+                        response = f"""📊 **CSV ဖိုင်ပို့မှုအောင်မြင်သည်**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1099,22 +1114,31 @@ class SalaryTelegramBot:
 
 🎯 **ပါဝင်သောအချက်အလက်များ:**
    • ရက်စွဲ, အချိန်, Shift အမျိုးအစား
-   • လုပ်ငန်းချိန်, OT ချိန်, လစာအသေးစိတ်
+   • လုပ်ငန်းချိန်, OT ချိန်, လစာအသေးစিတ်
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
-                    await query.edit_message_text(response, parse_mode='Markdown')
+                        await query.edit_message_text(response, parse_mode='Markdown')
 
-                    # Send file
-                    with open(filename, 'rb') as f:
-                        await context.bot.send_document(
-                            chat_id=query.message.chat_id,
-                            document=f,
-                            filename=filename,
-                            caption="📊 လစာဒေတာ CSV ဖိုင် - Excel/Sheets တွင် ဖွင့်နိုင်ပါသည်"
-                        )
-                else:
-                    response = """❌ **CSV ပို့မှုမအောင်မြင်**
+                        # Send file
+                        try:
+                            with open(filename, 'rb') as f:
+                                await context.bot.send_document(
+                                    chat_id=query.message.chat_id,
+                                    document=f,
+                                    filename=filename,
+                                    caption="📊 လစာဒေတာ CSV ဖိုင် - Excel/Sheets တွင် ဖွင့်နိုင်ပါသည်"
+                                )
+                            # Clean up file after sending
+                            try:
+                                os.remove(filename)
+                            except:
+                                pass
+                        except Exception as e:
+                            logger.error(f"Error sending CSV file: {e}")
+                            await query.edit_message_text("❌ ဖိုင်ပို့ရာတွင် အမှားရှိခဲ့သည်", parse_mode='Markdown')
+                    else:
+                        response = """❌ **CSV ပို့မှုမအောင်မြင်**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1123,19 +1147,23 @@ class SalaryTelegramBot:
 🔄 **ဖြေရှင်းနည်း:** အလုပ်ချိန်ထည့်ပြီး ပြန်လည်ကြိုးစားပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-                    await query.edit_message_text(response, parse_mode='Markdown')
+                        await query.edit_message_text(response, parse_mode='Markdown')
+                except Exception as e:
+                    logger.error(f"Error in CSV export: {e}")
+                    await query.edit_message_text("❌ **စနစ်အမှားရှိခဲ့သည်**\n\nCSV export လုပ်ရာတွင် ပြဿနာရှိပါသည်။", parse_mode='Markdown')
 
             elif callback_data == "export_json":
                 # Export to JSON with enhanced styling
-                json_data = self.export_manager.export_to_json(user_id, 30)
+                try:
+                    json_data = self.export_manager.export_to_json(user_id, 30)
 
-                if json_data:
-                    # Save to file and send
-                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.json"
-                    with open(filename, 'w', encoding='utf-8') as f:
-                        f.write(json_data)
+                    if json_data and json_data.strip():
+                        # Save to file and send
+                        filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.json"
+                        with open(filename, 'w', encoding='utf-8') as f:
+                            f.write(json_data)
 
-                    response = f"""📄 **JSON ဖိုင်ပို့မှုအောင်မြင်သည်**
+                        response = f"""📄 **JSON ဖိုင်ပို့မှုအောင်မြင်သည်**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1157,18 +1185,27 @@ class SalaryTelegramBot:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
-                    await query.edit_message_text(response, parse_mode='Markdown')
+                        await query.edit_message_text(response, parse_mode='Markdown')
 
-                    # Send file
-                    with open(filename, 'rb') as f:
-                        await context.bot.send_document(
-                            chat_id=query.message.chat_id,
-                            document=f,
-                            filename=filename,
-                            caption="📄 လစာဒေတာ JSON ဖိုင် - Programming applications အတွက်"
-                        )
-                else:
-                    response = """❌ **JSON ပို့မှုမအောင်မြင်**
+                        # Send file
+                        try:
+                            with open(filename, 'rb') as f:
+                                await context.bot.send_document(
+                                    chat_id=query.message.chat_id,
+                                    document=f,
+                                    filename=filename,
+                                    caption="📄 လစာဒေတာ JSON ဖိုင် - Programming applications အတွက်"
+                                )
+                            # Clean up file after sending
+                            try:
+                                os.remove(filename)
+                            except:
+                                pass
+                        except Exception as e:
+                            logger.error(f"Error sending JSON file: {e}")
+                            await query.edit_message_text("❌ ဖိုင်ပို့ရာတွင် အမှားရှိခဲ့သည်", parse_mode='Markdown')
+                    else:
+                        response = """❌ **JSON ပို့မှုမအောင်မြင်**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1177,7 +1214,10 @@ class SalaryTelegramBot:
 🔄 **ဖြေရှင်းနည်း:** အလုပ်ချိန်ထည့်ပြီး ပြန်လည်ကြိုးစားပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-                    await query.edit_message_text(response, parse_mode='Markdown')
+                        await query.edit_message_text(response, parse_mode='Markdown')
+                except Exception as e:
+                    logger.error(f"Error in JSON export: {e}")
+                    await query.edit_message_text("❌ **စနစ်အမှားရှိခဲ့သည်**\n\nJSON export လုပ်ရာတွင် ပြဿနာရှိပါသည်။", parse_mode='Markdown')
 
             elif callback_data == "work_streak":
                 # Show work streak information
@@ -1693,6 +1733,150 @@ class SalaryTelegramBot:
         except Exception as e:
             logger.error(f"Error handling salary date command: {e}")
             response = "❌ **လစာရက်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+    async def handle_goal_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
+        """Handle goal setting commands."""
+        user_id = str(update.effective_user.id)
+        keyboard = self.get_main_keyboard()
+
+        try:
+            # Parse command: "ပန်းတိုင် 300000"
+            parts = user_input.split(' ')
+            if len(parts) < 2:
+                response = """❌ **ပုံစံမှားနေပါသည်**
+
+💡 **မှန်ကန်သောပုံစံ:**
+`ပန်းတိုင် 300000`
+
+ဥပမာ: `ပန်းတိုင် 250000` (လစာ ¥250,000)"""
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                return
+
+            try:
+                target_salary = float(parts[1])
+                result = self.goal_tracker.set_monthly_goal(user_id, 'salary', target_salary)
+
+                if result.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+                else:
+                    response = f"✅ **{result['message']}**"
+
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+            except ValueError:
+                response = "❌ **ပမာဏသည် နံပါတ်ဖြစ်ရမည်**\n\nဥပမာ: `ပန်းတိုင် 300000`"
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+        except Exception as e:
+            logger.error(f"Error handling goal command: {e}")
+            response = "❌ **ပန်းတိုင်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+    async def handle_hours_goal_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
+        """Handle hours goal setting commands."""
+        user_id = str(update.effective_user.id)
+        keyboard = self.get_main_keyboard()
+
+        try:
+            # Parse command: "ချိန်ပန်းတိုင် 180"
+            parts = user_input.split(' ')
+            if len(parts) < 2:
+                response = """❌ **ပုံစံမှားနေပါသည်**
+
+💡 **မှန်ကန်သောပုံစံ:**
+`ချိန်ပန်းတိုင် 180`
+
+ဥပမာ: `ချိန်ပန်းတိုင် 160` (လစဉ် ၁၆၀ နာရီ)"""
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+                return
+
+            try:
+                target_hours = float(parts[1])
+                result = self.goal_tracker.set_monthly_goal(user_id, 'hours', target_hours)
+
+                if result.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+                else:
+                    response = f"✅ **{result['message']}**"
+
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+            except ValueError:
+                response = "❌ **ပမာဏသည် နံပါတ်ဖြစ်ရမည်**\n\nဥပမာ: `ချိန်ပန်းတိုင် 180`"
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+        except Exception as e:
+            logger.error(f"Error handling hours goal command: {e}")
+            response = "❌ **အလုပ်ချိန်ပန်းတိုင်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်**"
+            await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+    async def handle_text_commands(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str) -> None:
+        """Handle text-based commands like CSV export, delete, etc."""
+        user_id = str(update.effective_user.id)
+        keyboard = self.get_main_keyboard()
+
+        try:
+            if user_input == "CSV ပို့မယ်":
+                csv_data = self.export_manager.export_to_csv(user_id, 30)
+                if csv_data and csv_data.strip():
+                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.csv"
+                    with open(filename, 'w', encoding='utf-8-sig') as f:
+                        f.write(csv_data)
+                    
+                    await update.message.reply_text("📊 CSV ဖိုင်ပြုလုပ်ပြီးပါပြီ", reply_markup=keyboard)
+                    
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=update.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="📊 လစာဒေတာ CSV ဖိုင်"
+                        )
+                    
+                    try:
+                        os.remove(filename)
+                    except:
+                        pass
+                else:
+                    await update.message.reply_text("❌ ပို့ရန်ဒေတာမရှိပါ", parse_mode='Markdown', reply_markup=keyboard)
+
+            elif user_input == "JSON ပို့မယ်":
+                json_data = self.export_manager.export_to_json(user_id, 30)
+                if json_data and json_data.strip():
+                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.json"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(json_data)
+                    
+                    await update.message.reply_text("📄 JSON ဖိုင်ပြုလုပ်ပြီးပါပြီ", reply_markup=keyboard)
+                    
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=update.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="📄 လစာဒေတာ JSON ဖိုင်"
+                        )
+                    
+                    try:
+                        os.remove(filename)
+                    except:
+                        pass
+                else:
+                    await update.message.reply_text("❌ ပို့ရန်ဒေတာမရှိပါ", parse_mode='Markdown', reply_markup=keyboard)
+
+            elif user_input == "အားလုံးဖျက်မယ်":
+                success = self.storage.delete_user_data(user_id)
+                if success:
+                    response = "✅ **အားလုံးဖျက်ပြီးပါပြီ**\n\nသင့်ဒေတာအားလုံး ဖျက်လိုက်ပါပြီ။"
+                else:
+                    response = "❌ **ဖျက်မှုမအောင်မြင်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
+                
+                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+        except Exception as e:
+            logger.error(f"Error handling text command '{user_input}': {e}")
+            response = "❌ **စနစ်အမှားရှိခဲ့သည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
             await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
     def run(self):

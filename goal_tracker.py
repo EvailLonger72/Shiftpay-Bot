@@ -799,7 +799,7 @@ class GoalTracker:
                 # Get weekly data
                 weekly_data = self.storage.get_date_range_data(user_id, 7)
 
-                if not data or not weekly_data.get('calculations'):
+                if not weekly_data or not weekly_data.get('calculations'):
                     return {'error': 'ဤအပတ်အတွက် ဒေတာ မတွေ့ပါ။'}
 
                 # Calculate current totals
