@@ -2174,12 +2174,17 @@ class SalaryTelegramBot:
             # Format response in Burmese
             formatted_response = self.formatter.format_salary_response(result)
 
-            # Add shift confirmation
+            # Add shift confirmation with night shift special note
+            if shift_name == "Night Shift" and result.get('night_ot_minutes', 0) > 0:
+                night_note = "\n🌙 **Night Shift နောက်နေ့ရောက်**: OT အားလုံး ¥2,625/နာရီ နှုန်းဖြင့် တွက်ချက်ပြီး"
+            else:
+                night_note = ""
+
             response = f"""✅ **{shift_name} အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{formatted_response}
+{formatted_response}{night_note}
 
 💡 **နောက်တစ်ကြိမ် သတ်မှတ်ရန်** ⏰ အချိန်သတ်မှတ် ခလုတ်ကို နှိပ်ပါ"""
 

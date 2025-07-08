@@ -115,17 +115,24 @@ class SalaryCalculator:
         regular_minutes = min(paid_minutes, self.REGULAR_HOURS_LIMIT)
         total_overtime_minutes = max(0, paid_minutes - self.REGULAR_HOURS_LIMIT)
         
-        # Check if work crosses midnight (next day)
+        # Check if work crosses midnight (next day) or is night shift
         crosses_midnight = end_time.date() > start_time.date()
+        is_night_shift = start_time.hour >= 16  # Night shift typically starts at 16:00 or later
         
-        # If work crosses midnight OR exceeds 7:35, all OT is at night rate 2625¥
-        if crosses_midnight or total_overtime_minutes > 0:
+        # Night shift work or crossing midnight: all OT at 2625¥ rate
+        if crosses_midnight or is_night_shift:
             # All overtime is night OT at 2625¥ rate
             night_ot_minutes = total_overtime_minutes
             regular_ot_minutes = 0
         else:
-            night_ot_minutes = 0
-            regular_ot_minutes = 0
+            # Day shift work within same day
+            if total_overtime_minutes > 0:
+                # After 7h35m work: use night rate for all OT
+                night_ot_minutes = total_overtime_minutes
+                regular_ot_minutes = 0
+            else:
+                night_ot_minutes = 0
+                regular_ot_minutes = 0
         
         return regular_minutes, regular_ot_minutes, night_ot_minutes
     
