@@ -152,14 +152,16 @@ class NotificationManager:
                 return {'alert': False, 'message': 'ဒေတာ မတွေ့ပါ။'}
             
             # Calculate weekly totals
-            total_days = len(data['calculations'])
+            calculations = data.get('calculations', {})
+            total_days = len(calculations)
             total_salary = 0
             total_hours = 0
             
-            for calculations in data['calculations'].values():
-                for calc in calculations:
-                    total_salary += calc['total_salary']
-                    total_hours += calc['total_minutes'] / 60
+            for date_calculations in calculations.values():
+                if isinstance(date_calculations, list):
+                    for calc in date_calculations:
+                        total_salary += calc['total_salary']
+                        total_hours += calc['total_minutes'] / 60
             
             # Check if performance is low
             avg_daily_hours = total_hours / 7 if total_days > 0 else 0

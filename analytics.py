@@ -200,3 +200,161 @@ class Analytics:
         except Exception as e:
             logger.error(f"Error getting recent history: {e}")
             return {'error': f'မှတ်တမ်းအမှား: {str(e)}'}
+import json
+from datetime import datetime, timedelta, date
+from typing import Dict, List, Optional
+from data_storage import DataStorage
+
+class Analytics:
+    """Handle analytics and data visualization for salary tracking."""
+    
+    def __init__(self):
+        self.storage = DataStorage()
+    
+    def generate_summary_stats(self, user_id: str, days: int = 30) -> Dict:
+        """Generate summary statistics for the last N days."""
+        try:
+            data = self.storage.get_date_range_data(user_id, days)
+            calculations = data.get('calculations', {})
+            
+            if not calculations:
+                return {'error': 'ဒေတာ မတွေ့ပါ။ ပထမဆုံး အလုပ်ချိန်မှတ်သားပါ။'}
+            
+            total_days = len(calculations)
+            total_salary = 0
+            total_work_hours = 0
+            total_regular_hours = 0
+            total_ot_hours = 0
+            
+            for date_calculations in calculations.values():
+                if isinstance(date_calculations, list):
+                    for calc in date_calculations:
+                        total_salary += calc['total_salary']
+                        total_work_hours += calc['total_minutes'] / 60
+                        total_regular_hours += calc['regular_minutes'] / 60
+                        total_ot_hours += (calc['ot_minutes'] + calc['night_ot_minutes']) / 60
+            
+            avg_daily_hours = round(total_work_hours / total_days, 1) if total_days > 0 else 0
+            avg_daily_salary = round(total_salary / total_days, 0) if total_days > 0 else 0
+            
+            return {
+                'total_days': total_days,
+                'total_salary': total_salary,
+                'total_work_hours': round(total_work_hours, 1),
+                'total_regular_hours': round(total_regular_hours, 1),
+                'total_ot_hours': round(total_ot_hours, 1),
+                'avg_daily_hours': avg_daily_hours,
+                'avg_daily_salary': avg_daily_salary
+            }
+            
+        except Exception as e:
+            return {'error': f'ခွဲခြမ်းစိတ်ဖြာမှုတွင် အမှားရှိခဲ့သည်: {str(e)}'}
+    
+    def generate_bar_chart_data(self, user_id: str, days: int = 14) -> Dict:
+        """Generate bar chart data for the last N days."""
+        try:
+            data = self.storage.get_date_range_data(user_id, days)
+            calculations = data.get('calculations', {})
+            
+            if not calculations:
+                return {'error': 'ဒေတာ မတွေ့ပါ။'}
+            
+            chart_data = []
+            
+            # Get last N days including days without work
+            today = date.today()
+            for i in range(days - 1, -1, -1):
+                check_date = today - timedelta(days=i)
+                date_str = check_date.isoformat()
+                
+                daily_hours = 0
+                daily_salary = 0
+                
+                if date_str in calculations and isinstance(calculations[date_str], list):
+                    for calc in calculations[date_str]:
+                        daily_hours += calc['total_minutes'] / 60
+                        daily_salary += calc['total_salary']
+                
+                chart_data.append({
+                    'date': date_str,
+                    'day': check_date.strftime('%m/%d'),
+                    'hours': round(daily_hours, 1),
+                    'salary': round(daily_salary, 0)
+                })
+            
+            return {'chart_data': chart_data}
+            
+        except Exception as e:
+            return {'error': f'ဂရပ်ဒေတာတွင် အမှားရှိခဲ့သည်: {str(e)}'}
+    
+    def create_text_bar_chart(self, chart_data: List[Dict], chart_type: str) -> str:
+        """Create text-based bar chart."""
+        if not chart_data:
+            return "ဒေတာ မရှိပါ"
+        
+        if chart_type == 'hours':
+            title = "📊 **နေ့စဉ်အလုပ်ချိန် (နာရီ)**"
+            values = [item['hours'] for item in chart_data]
+            unit = "နာရီ"
+        else:
+            title = "💰 **နေ့စဉ်လစာ (¥)**"
+            values = [item['salary'] for item in chart_data]
+            unit = "¥"
+        
+        max_value = max(values) if values else 1
+        chart_lines = [title, ""]
+        
+        for i, item in enumerate(chart_data):
+            value = values[i]
+            if max_value > 0:
+                bar_length = int((value / max_value) * 20)
+            else:
+                bar_length = 0
+            
+            bar = "█" * bar_length + "░" * (20 - bar_length)
+            
+            if chart_type == 'hours':
+                chart_lines.append(f"{item['day']}: {bar} {value}{unit}")
+            else:
+                chart_lines.append(f"{item['day']}: {bar} {value:,.0f}{unit}")
+        
+        return "\n".join(chart_lines)
+    
+    def get_recent_history(self, user_id: str, days: int = 7) -> Dict:
+        """Get recent work history."""
+        try:
+            data = self.storage.get_date_range_data(user_id, days)
+            calculations = data.get('calculations', {})
+            
+            if not calculations:
+                return {'error': 'မှတ်တမ်း မတွေ့ပါ။'}
+            
+            history = []
+            sorted_dates = sorted(calculations.keys(), reverse=True)
+            
+            for date_str in sorted_dates[:days]:
+                date_calculations = calculations[date_str]
+                if isinstance(date_calculations, list):
+                    daily_hours = 0
+                    daily_ot_hours = 0
+                    daily_salary = 0
+                    shifts = []
+                    
+                    for calc in date_calculations:
+                        daily_hours += calc['total_minutes'] / 60
+                        daily_ot_hours += (calc['ot_minutes'] + calc['night_ot_minutes']) / 60
+                        daily_salary += calc['total_salary']
+                        shifts.append(f"{calc['start_time']}-{calc['end_time']}")
+                    
+                    history.append({
+                        'date': date_str,
+                        'hours': round(daily_hours, 1),
+                        'ot_hours': round(daily_ot_hours, 1),
+                        'salary': daily_salary,
+                        'shifts': ', '.join(shifts)
+                    })
+            
+            return {'history': history}
+            
+        except Exception as e:
+            return {'error': f'မှတ်တမ်းရယူရာတွင် အမှားရှိခဲ့သည်: {str(e)}'}

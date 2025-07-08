@@ -170,3 +170,108 @@ class ExportManager:
             
         except Exception as e:
             return {'error': 'ပို့ရန်ဒေတာ အကျဉ်းချုပ် ရယူရာတွင် အမှားရှိသည်။'}
+import json
+import csv
+from io import StringIO
+from datetime import datetime
+from typing import Dict, List, Optional
+from data_storage import DataStorage
+
+class ExportManager:
+    """Handle data export functionality."""
+    
+    def __init__(self):
+        self.storage = DataStorage()
+    
+    def get_export_summary(self, user_id: str, days: int = 30) -> Dict:
+        """Get export summary information."""
+        try:
+            user_data = self.storage.load_user_data(user_id)
+            
+            if not user_data:
+                return {'error': 'ပို့ရန်ဒေတာ မရှိပါ။'}
+            
+            total_records = sum(len(calcs) if isinstance(calcs, list) else 0 for calcs in user_data.values())
+            total_days = len(user_data)
+            
+            dates = sorted(user_data.keys())
+            date_range = {
+                'start': dates[0] if dates else 'မရှိ',
+                'end': dates[-1] if dates else 'မရှိ'
+            }
+            
+            return {
+                'total_records': total_records,
+                'total_days': total_days,
+                'date_range': date_range
+            }
+            
+        except Exception as e:
+            return {'error': f'ပို့မှုအချက်အလက်ရယူရာတွင် အမှားရှိခဲ့သည်: {str(e)}'}
+    
+    def export_to_csv(self, user_id: str, days: int = 30) -> Optional[str]:
+        """Export data to CSV format."""
+        try:
+            data = self.storage.get_date_range_data(user_id, days)
+            calculations = data.get('calculations', {})
+            
+            if not calculations:
+                return None
+            
+            output = StringIO()
+            writer = csv.writer(output)
+            
+            # Header
+            writer.writerow([
+                'ရက်စွဲ', 'စချိန်', 'ဆုံးချိန်', 'Shift', 'စုစုပေါင်းမိနစ်',
+                'Break မိနစ်', 'လုပ်ငန်းမိနစ်', 'ပုံမှန်နာရီ', 'OT နာရီ', 'ညOT နာရီ',
+                'စုစုပေါင်းလစာ', 'ပုံမှန်လစာ', 'OT လစာ', 'ညOT လစာ'
+            ])
+            
+            # Data rows
+            for date_str in sorted(calculations.keys()):
+                date_calculations = calculations[date_str]
+                if isinstance(date_calculations, list):
+                    for calc in date_calculations:
+                        writer.writerow([
+                            date_str,
+                            calc['start_time'],
+                            calc['end_time'],
+                            calc['shift_type'],
+                            calc['total_minutes'],
+                            calc['break_minutes'],
+                            calc['paid_minutes'],
+                            round(calc['regular_minutes'] / 60, 2),
+                            round(calc['ot_minutes'] / 60, 2),
+                            round(calc['night_ot_minutes'] / 60, 2),
+                            calc['total_salary'],
+                            calc['regular_salary'],
+                            calc['ot_salary'],
+                            calc['night_ot_salary']
+                        ])
+            
+            return output.getvalue()
+            
+        except Exception as e:
+            return None
+    
+    def export_to_json(self, user_id: str, days: int = 30) -> Optional[str]:
+        """Export data to JSON format."""
+        try:
+            data = self.storage.get_date_range_data(user_id, days)
+            calculations = data.get('calculations', {})
+            
+            if not calculations:
+                return None
+            
+            export_data = {
+                'user_id': user_id,
+                'export_date': datetime.now().isoformat(),
+                'period_days': days,
+                'calculations': calculations
+            }
+            
+            return json.dumps(export_data, ensure_ascii=False, indent=2)
+            
+        except Exception as e:
+            return None

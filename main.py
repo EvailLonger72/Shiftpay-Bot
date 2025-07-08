@@ -163,8 +163,7 @@ Break များ:
                 return
             
             # Save calculation data
-            user_id = str(update.effective_user.id)
-            self.storage.save_calculation(user_id, result)
+            calculation_saved = self.storage.save_calculation(user_id, result)
             
             # Format response in Burmese
             response = self.formatter.format_salary_response(result)
@@ -838,12 +837,22 @@ Break များ:
             event_date = parts[1]
             description = parts[2]
             
-            result = self.calendar_manager.add_user_event(user_id, event_date, "custom", description)
-            
-            if result.get('error'):
-                response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
-            else:
-                response = f"✅ **ပွဲအစီအစဉ်ထည့်ပြီးပါပြီ**\n\n{result['message']}"
+            # Validate date format
+            try:
+                datetime.strptime(event_date, "%Y-%m-%d")
+                result = self.calendar_manager.add_user_event(user_id, event_date, "custom", description)
+                
+                if result.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{result['error']}"
+                else:
+                    response = f"✅ **ပွဲအစီအစဉ်ထည့်ပြီးပါပြီ**\n\n{result['message']}"
+            except ValueError:
+                response = """❌ **ရက်စွဲပုံစံမှားနေပါသည်**
+
+💡 **မှန်ကန်သောပုံစံ:**
+`ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ`
+
+ဥပမာ: `ပွဲ 2025-07-25 လစာထုတ်ရက်`"""
             
             await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
             

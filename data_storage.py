@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
 import logging
 
@@ -91,6 +91,9 @@ class DataStorage:
         try:
             user_data = self.load_user_data(user_id)
             
+            if not user_data:
+                return {'calculations': {}}
+            
             # Get recent dates
             today = date.today()
             recent_data = {}
@@ -100,11 +103,11 @@ class DataStorage:
                 if check_date in user_data:
                     recent_data[check_date] = user_data[check_date]
             
-            return recent_data
+            return {'calculations': recent_data}
             
         except Exception as e:
             logger.error(f"Error getting date range data: {e}")
-            return {}
+            return {'calculations': {}}
     
     def delete_user_data(self, user_id: str) -> bool:
         """Delete all data for a user."""

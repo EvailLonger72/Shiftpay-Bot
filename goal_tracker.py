@@ -355,3 +355,166 @@ class GoalTracker:
             
         except Exception as e:
             return {'error': 'ပန်းတိုင်အကြံပြုချက်များ ရယူရာတွင် အမှားရှိသည်။'}
+import json
+import os
+from datetime import datetime, date
+from typing import Dict, List, Optional
+from data_storage import DataStorage
+
+class GoalTracker:
+    """Handle goal tracking and progress monitoring."""
+    
+    def __init__(self, goals_file: str = "goals.json"):
+        self.goals_file = goals_file
+        self.storage = DataStorage()
+        self.ensure_goals_file()
+    
+    def ensure_goals_file(self):
+        """Ensure goals file exists."""
+        if not os.path.exists(self.goals_file):
+            with open(self.goals_file, 'w', encoding='utf-8') as f:
+                json.dump({}, f, ensure_ascii=False, indent=2)
+    
+    def load_goals(self) -> Dict:
+        """Load goals data."""
+        try:
+            with open(self.goals_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return {}
+    
+    def save_goals(self, goals: Dict) -> bool:
+        """Save goals data."""
+        try:
+            with open(self.goals_file, 'w', encoding='utf-8') as f:
+                json.dump(goals, f, ensure_ascii=False, indent=2)
+            return True
+        except:
+            return False
+    
+    def set_monthly_goal(self, user_id: str, goal_type: str, target: float) -> Dict:
+        """Set monthly goal for user."""
+        try:
+            if goal_type not in ['salary', 'hours']:
+                return {'error': 'ပန်းတိုင်အမျိုးအစား မမှန်ကန်ပါ (salary သို့မဟုတ် hours)'}
+            
+            goals = self.load_goals()
+            current_month = datetime.now().strftime('%Y-%m')
+            
+            if user_id not in goals:
+                goals[user_id] = {}
+            
+            if 'monthly' not in goals[user_id]:
+                goals[user_id]['monthly'] = {}
+            
+            if current_month not in goals[user_id]['monthly']:
+                goals[user_id]['monthly'][current_month] = {}
+            
+            goals[user_id]['monthly'][current_month][goal_type] = {
+                'target': target,
+                'set_date': datetime.now().isoformat()
+            }
+            
+            if self.save_goals(goals):
+                unit = '¥' if goal_type == 'salary' else 'နာရီ'
+                return {
+                    'success': True,
+                    'message': f'လစဉ်{goal_type}ပန်းတိုင် {target:,.0f}{unit} သတ်မှတ်ပြီးပါပြီ'
+                }
+            else:
+                return {'error': 'ပန်းတိုင်သိမ်းဆည်းရာတွင် အမှားရှိခဲ့သည်'}
+                
+        except Exception as e:
+            return {'error': f'ပန်းတိုင်သတ်မှတ်ရာတွင် အမှားရှိခဲ့သည်: {str(e)}'}
+    
+    def check_goal_progress(self, user_id: str, period: str = 'monthly') -> Dict:
+        """Check goal progress for user."""
+        try:
+            goals = self.load_goals()
+            current_month = datetime.now().strftime('%Y-%m')
+            
+            if (user_id not in goals or 
+                period not in goals[user_id] or 
+                current_month not in goals[user_id][period]):
+                return {'error': 'ပန်းတိုင်သတ်မှတ်ထားခြင်း မရှိပါ'}
+            
+            month_goals = goals[user_id][period][current_month]
+            user_data = self.storage.load_user_data(user_id)
+            
+            # Calculate current progress
+            current_salary = 0
+            current_hours = 0
+            days_worked = 0
+            
+            for date_str, date_calculations in user_data.items():
+                if date_str.startswith(current_month) and isinstance(date_calculations, list):
+                    days_worked += 1
+                    for calc in date_calculations:
+                        current_salary += calc['total_salary']
+                        current_hours += calc['total_minutes'] / 60
+            
+            progress = {}
+            
+            for goal_type, goal_data in month_goals.items():
+                target = goal_data['target']
+                current = current_salary if goal_type == 'salary' else current_hours
+                
+                progress_percent = (current / target * 100) if target > 0 else 0
+                remaining = max(0, target - current)
+                
+                progress[goal_type] = {
+                    'target': target,
+                    'current': current,
+                    'progress_percent': progress_percent,
+                    'remaining': remaining
+                }
+            
+            return {
+                'month': current_month,
+                'days_worked': days_worked,
+                'progress': progress
+            }
+            
+        except Exception as e:
+            return {'error': f'ပန်းတိုင်တိုးတက်မှုစစ်ဆေးရာတွင် အမှားရှိခဲ့သည်: {str(e)}'}
+    
+    def get_goal_recommendations(self, user_id: str) -> Dict:
+        """Get goal recommendations based on past performance."""
+        try:
+            user_data = self.storage.load_user_data(user_id)
+            
+            if not user_data:
+                return {'error': 'အကြံပြုချက်များအတွက် ဒေတာမလုံလောက်ပါ'}
+            
+            # Calculate averages from last 30 days
+            total_salary = 0
+            total_hours = 0
+            total_days = 0
+            
+            for date_calculations in user_data.values():
+                if isinstance(date_calculations, list):
+                    total_days += 1
+                    for calc in date_calculations:
+                        total_salary += calc['total_salary']
+                        total_hours += calc['total_minutes'] / 60
+            
+            if total_days == 0:
+                return {'error': 'အကြံပြုချက်များအတွက် ဒေတာမလုံလောက်ပါ'}
+            
+            avg_daily_salary = total_salary / total_days
+            avg_daily_hours = total_hours / total_days
+            
+            # Recommend monthly goals (assume 25 working days)
+            recommended_monthly_salary = avg_daily_salary * 25 * 1.1  # 10% increase
+            recommended_monthly_hours = avg_daily_hours * 25
+            
+            return {
+                'avg_daily_salary': avg_daily_salary,
+                'avg_daily_hours': avg_daily_hours,
+                'recommended_monthly_salary': recommended_monthly_salary,
+                'recommended_monthly_hours': recommended_monthly_hours,
+                'based_on_days': total_days
+            }
+            
+        except Exception as e:
+            return {'error': f'အကြံပြုချက်ရယူရာတွင် အမှားရှိခဲ့သည်: {str(e)}'}

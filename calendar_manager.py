@@ -227,14 +227,20 @@ class CalendarManager:
             storage = DataStorage()
             user_data = storage.load_user_data(user_id)
             
-            if not user_data.get("calculations"):
+            if not user_data:
                 return {"error": "အလုပ်မှတ်တမ်းမရှိသေးပါ"}
             
-            # Calculate average daily salary
-            recent_calculations = list(user_data["calculations"].values())[-30:]  # Last 30 entries
-            if not recent_calculations:
+            # Calculate average daily salary from user data
+            all_calculations = []
+            for date_data in user_data.values():
+                if isinstance(date_data, list):
+                    all_calculations.extend(date_data)
+            
+            if not all_calculations:
                 return {"error": "လတ်တလော အလုပ်မှတ်တမ်းမရှိပါ"}
             
+            # Get last 30 calculations
+            recent_calculations = all_calculations[-30:]
             avg_daily_salary = sum(calc["total_salary"] for calc in recent_calculations) / len(recent_calculations)
             
             # Get next salary payment date
@@ -245,8 +251,13 @@ class CalendarManager:
             if days_until_payment > 0:
                 # Suggest target for remaining days
                 target_monthly_salary = avg_daily_salary * 25  # Assume 25 working days per month
-                current_month_total = sum(calc["total_salary"] for calc in recent_calculations 
-                                        if calc["date"].startswith(datetime.now().strftime("%Y-%m")))
+                # Calculate current month total
+                current_month = datetime.now().strftime("%Y-%m")
+                current_month_total = 0
+                for date_str, date_data in user_data.items():
+                    if date_str.startswith(current_month) and isinstance(date_data, list):
+                        for calc in date_data:
+                            current_month_total += calc["total_salary"]
                 
                 remaining_needed = max(0, target_monthly_salary - current_month_total)
                 suggested_daily = remaining_needed / days_until_payment if days_until_payment > 0 else 0
