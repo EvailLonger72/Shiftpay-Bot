@@ -391,13 +391,22 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
             elif button_text == "🗑️ ဒေတာဖျက်မှု":
-                response = """🗑️ **ဒေတာဖျက်မှုမီနူး**
+                response = """🗑️ **ဒေတာဖျက်မှုဌာန**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ **သတိပေးချက်:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
+⚠️ **အရေးကြီးသတိပေးချက်** ⚠️
 
-💡 **ဖျက်ရန်:**
+🔴 **သတိ:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
+🔴 **သတိ:** လုပ်ငန်းမှတ်တမ်းအားလုံး ပျောက်သွားမည်
+🔴 **သတိ:** ဤလုပ်ဆောင်ချက်ကို ပြန်ပြေးမရပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💾 **အကြံပြုချက်:**
+Export လုပ်ပြီးမှ ဖျက်သင့်ပါသလား?
+
+💡 **ဖျက်ရန်နည်းလမ်း:**
 `အားလုံးဖျက်မယ်` ရေးပြီးပေးပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
@@ -568,18 +577,26 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "delete_menu":
-                # Show delete options
+                # Show delete options with enhanced styling
                 keyboard = [
-                    [InlineKeyboardButton("🗑️ အားလုံးဖျက်မည်", callback_data="delete_all")],
+                    [InlineKeyboardButton("⚠️ အားလုံးဖျက်မည် ⚠️", callback_data="delete_all")],
                     [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="back_to_main")]
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
 
                 response = """🗑️ **ဒေတာဖျက်မှုမီနူး**
 
-⚠️ **သတိပေးချက်:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ **အရေးကြီးသတိပေးချက်** ⚠️
+
+🔴 **သတိ:** ဖျက်ပြီးသည်များကို ပြန်လည်ရယူ၍မရပါ
+🔴 **သတိ:** လုပ်ငန်းမှတ်တမ်းအားလုံး ပျောက်သွားမည်
+🔴 **သတိ:** ဤလုပ်ဆောင်ချက်ကို ပြန်ပြေးမရပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💭 **စဉ်းစားကြည့်ပါ:** ဒေတာများကို မဖျက်မီ export လုပ်ထားသင့်ပါသလား?
 
 မည်သည့်အရာကို ဖျက်လိုပါသလဲ?"""
 
@@ -590,9 +607,25 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                 success = self.storage.delete_user_data(user_id)
 
                 if success:
-                    response = "✅ **ဖျက်မှုအောင်မြင်သည်**\n\nသင့်ဒေတာအားလုံး ဖျက်ပြီးပါပြီ။"
+                    response = """🗑️ **ဖျက်မှုအောင်မြင်သည်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ သင့်ဒေတာအားလုံး ဖျက်ပြီးပါပြီ
+🔄 စနစ်သစ်စတင်ရန် အသင့်ရှိပါပြီ
+📱 နောက်တစ်ကြိမ် အချိန်ထည့်ပြီး စတင်နိုင်ပါပြီ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                 else:
-                    response = "❌ **ဖျက်မှုမအောင်မြင်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
+                    response = """❌ **ဖျက်မှုမအောင်မြင်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 ဒေတာဖျက်ရာတွင် အမှားရှိခဲ့သည်
+🔄 ကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ
+📞 ပြဿနာဆက်ရှိပါက ထောက်ပံ့မှုဖြင့် ဆက်သွယ်ပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
                 await query.edit_message_text(response, parse_mode='Markdown')
 
@@ -622,11 +655,11 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                 await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
 
             elif callback_data == "export_menu":
-                # Show export menu
+                # Show export menu with enhanced styling
                 keyboard = [
                     [
-                        InlineKeyboardButton("📊 CSV ပို့မှု", callback_data="export_csv"),
-                        InlineKeyboardButton("📄 JSON ပို့မှု", callback_data="export_json")
+                        InlineKeyboardButton("📊 CSV ဖိုင်ပို့မှု", callback_data="export_csv"),
+                        InlineKeyboardButton("📄 JSON ဖိုင်ပို့မှု", callback_data="export_json")
                     ],
                     [
                         InlineKeyboardButton("📅 လစဉ်အစီရင်ခံစာ", callback_data="monthly_report"),
@@ -636,11 +669,19 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
 
-                response = """📤 **ဒေတာပို့မှုမီနူး**
+                response = """📤 **ဒေတာပို့မှုဌာန**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-သင့်လစာဒေတာကို CSV သို့မဟုတ် JSON ပုံစံဖြင့် ပို့နိုင်ပါသည်။
+💾 **ပို့မှုပုံစံများ:**
+
+📊 **CSV ဖိုင်:** Excel, Google Sheets တွင် ဖွင့်နိုင်
+📄 **JSON ဖိုင်:** Programming, အခြားစနစ်များအတွက်
+📈 **လစဉ်အစီရင်ခံစာ:** အသေးစိတ်ခွဲခြမ်းမှု
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 **အကြံပြုချက်:** ဒေတာအရံအားအနေဖြင့် လစဉ် export လုပ်ထားပါ
 
 မည်သည့်ပုံစံဖြင့် ပို့လိုပါသလဲ?"""
 
@@ -672,7 +713,7 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                 await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
 
             elif callback_data == "export_csv":
-                # Export to CSV
+                # Export to CSV with enhanced styling
                 csv_data = self.export_manager.export_to_csv(user_id, 30)
 
                 if csv_data:
@@ -681,12 +722,25 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                     with open(filename, 'w', encoding='utf-8') as f:
                         f.write(csv_data)
 
-                    response = f"""✅ **CSV ပို့မှုအောင်မြင်သည်**
+                    response = f"""📊 **CSV ဖိုင်ပို့မှုအောင်မြင်သည်**
 
-📊 **ဖိုင်အမည်:** {filename}
-📅 **နောက်ဆုံး ၃၀ ရက်** ဒေတာပါဝင်ပါသည်
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ဖိုင်ကို သင့်ကွန်ပျူတာတွင် Excel သို့မဟုတ် Google Sheets ဖြင့် ဖွင့်နိုင်ပါသည်။"""
+✅ **ပြီးမြောက်မှုအခြေအနေ:** အောင်မြင်
+📁 **ဖိုင်အမည်:** {filename}
+📅 **ဒေတာကာလ:** နောက်ဆုံး ၃၀ ရက်
+💾 **ဖိုင်အမျိုးအစား:** CSV (Comma-Separated Values)
+
+📈 **အသုံးပြုနည်း:**
+   • Microsoft Excel တွင် ဖွင့်ခြင်း
+   • Google Sheets တွင် import လုပ်ခြင်း
+   • Numbers (Mac) တွင် ဖွင့်ခြင်း
+
+🎯 **ပါဝင်သောအချက်အလက်များ:**
+   • ရက်စွဲ, အချိန်, Shift အမျိုးအစား
+   • လုပ်ငန်းချိန်, OT ချိန်, လစာအသေးစိတ်
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
                     await query.edit_message_text(response, parse_mode='Markdown')
 
@@ -696,14 +750,22 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                             chat_id=query.message.chat_id,
                             document=f,
                             filename=filename,
-                            caption="📊 လစာဒေတာ CSV ဖိုင်"
+                            caption="📊 လစာဒေတာ CSV ဖိုင် - Excel/Sheets တွင် ဖွင့်နိုင်ပါသည်"
                         )
                 else:
-                    response = "❌ **ပို့မှုမအောင်မြင်**\n\nပို့ရန်ဒေတာ မတွေ့ပါ။"
+                    response = """❌ **CSV ပို့မှုမအောင်မြင်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 **အမှား:** ပို့ရန်ဒေတာ မတွေ့ပါ
+💡 **အကြံပြုချက်:** အချိန်မှတ်သားပြီးမှ export လုပ်ပါ
+🔄 **ဖြေရှင်းနည်း:** အလုပ်ချိန်ထည့်ပြီး ပြန်လည်ကြိုးစားပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                     await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "export_json":
-                # Export to JSON
+                # Export to JSON with enhanced styling
                 json_data = self.export_manager.export_to_json(user_id, 30)
 
                 if json_data:
@@ -712,12 +774,27 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                     with open(filename, 'w', encoding='utf-8') as f:
                         f.write(json_data)
 
-                    response = f"""✅ **JSON ပို့မှုအောင်မြင်သည်**
+                    response = f"""📄 **JSON ဖိုင်ပို့မှုအောင်မြင်သည်**
 
-📄 **ဖိုင်အမည်:** {filename}
-📅 **နောက်ဆုံး ၃၀ ရက်** ဒေတာပါဝင်ပါသည်
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ဖိုင်ကို programming applications များဖြင့် အသုံးပြုနိုင်ပါသည်။"""
+✅ **ပြီးမြောက်မှုအခြေအနေ:** အောင်မြင်
+📁 **ဖိုင်အမည်:** {filename}
+📅 **ဒေတာကာလ:** နောက်ဆုံး ၃၀ ရက်
+💾 **ဖိုင်အမျိုးအစား:** JSON (JavaScript Object Notation)
+
+🛠️ **အသုံးပြုနည်း:**
+   • Programming applications များတွင်
+   • API integration အတွက်
+   • Database import အတွက်
+   • Data analysis tools များတွင်
+
+🎯 **ပါဝင်သောအချက်အလက်များ:**
+   • အသေးစိတ်ဒေတာဖွဲ့စည်းပုံ
+   • Metadata နှင့် timestamps
+   • Structured format for developers
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
                     await query.edit_message_text(response, parse_mode='Markdown')
 
@@ -727,10 +804,18 @@ Break များ: 18:45~18:55, 20:55~21:40, 23:10~23:20, 00:50~01:00, 02:25~02
                             chat_id=query.message.chat_id,
                             document=f,
                             filename=filename,
-                            caption="📄 လစာဒေတာ JSON ဖိုင်"
+                            caption="📄 လစာဒေတာ JSON ဖိုင် - Programming applications အတွက်"
                         )
                 else:
-                    response = "❌ **ပို့မှုမအောင်မြင်**\n\nပို့ရန်ဒေတာ မတွေ့ပါ။"
+                    response = """❌ **JSON ပို့မှုမအောင်မြင်**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 **အမှား:** ပို့ရန်ဒေတာ မတွေ့ပါ
+💡 **အကြံပြုချက်:** အချိန်မှတ်သားပြီးမှ export လုပ်ပါ
+🔄 **ဖြေရှင်းနည်း:** အလုပ်ချိန်ထည့်ပြီး ပြန်လည်ကြိုးစားပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                     await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "work_streak":
