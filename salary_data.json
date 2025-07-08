@@ -80,6 +80,22 @@
         "ot_salary": 0.0,
         "night_ot_salary": 4593.75,
         "total_salary": 20518.75
+      },
+      {
+        "timestamp": "2025-07-08T18:57:26.439966",
+        "start_time": "16:35",
+        "end_time": "02:50",
+        "shift_type": "C342",
+        "total_minutes": 615,
+        "break_minutes": 65,
+        "paid_minutes": 550,
+        "regular_minutes": 455,
+        "ot_minutes": 0,
+        "night_ot_minutes": 95,
+        "regular_salary": 15925.0,
+        "ot_salary": 0.0,
+        "night_ot_salary": 4156.25,
+        "total_salary": 20081.25
       }
     ]
   }
