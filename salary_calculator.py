@@ -49,9 +49,9 @@ class SalaryCalculator:
                 start_time, end_time, paid_minutes
             )
             
-            # Calculate salary
+            # Calculate salary - All OT at 2625¥ rate
             regular_salary = (regular_minutes / 60) * self.BASE_RATE
-            ot_salary = (ot_minutes / 60) * self.BASE_RATE
+            ot_salary = (ot_minutes / 60) * self.NIGHT_OT_RATE  # Use night rate for all OT
             night_ot_salary = (night_ot_minutes / 60) * self.NIGHT_OT_RATE
             total_salary = regular_salary + ot_salary + night_ot_salary
             
@@ -111,17 +111,21 @@ class SalaryCalculator:
     def split_work_hours(self, start_time: datetime, end_time: datetime, 
                         paid_minutes: int) -> Tuple[int, int, int]:
         """Split work hours into regular, overtime, and night overtime."""
-        # For simplicity, we'll assume all work is regular unless it exceeds 7h35m
-        # and night OT is calculated based on work after 22:00
-        
+        # Regular hours up to 7h35m
         regular_minutes = min(paid_minutes, self.REGULAR_HOURS_LIMIT)
-        overtime_minutes = max(0, paid_minutes - self.REGULAR_HOURS_LIMIT)
+        total_overtime_minutes = max(0, paid_minutes - self.REGULAR_HOURS_LIMIT)
         
-        # Calculate night overtime (work after 22:00)
-        night_ot_minutes = self.calculate_night_overtime(start_time, end_time, paid_minutes)
+        # Check if work crosses midnight (next day)
+        crosses_midnight = end_time.date() > start_time.date()
         
-        # Adjust regular overtime to exclude night OT
-        regular_ot_minutes = max(0, overtime_minutes - night_ot_minutes)
+        # If work crosses midnight OR exceeds 7:35, all OT is at night rate 2625¥
+        if crosses_midnight or total_overtime_minutes > 0:
+            # All overtime is night OT at 2625¥ rate
+            night_ot_minutes = total_overtime_minutes
+            regular_ot_minutes = 0
+        else:
+            night_ot_minutes = 0
+            regular_ot_minutes = 0
         
         return regular_minutes, regular_ot_minutes, night_ot_minutes
     

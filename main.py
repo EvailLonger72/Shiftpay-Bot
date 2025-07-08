@@ -50,7 +50,7 @@ class SalaryTelegramBot:
                 KeyboardButton("📋 မှတ်တမ်း")
             ],
             [
-                KeyboardButton("🎯 ပန်းတိုင်"),
+                KeyboardButton("📊 Dashboard"),
                 KeyboardButton("📅 ပြက္ခဒိန်")
             ],
             [
@@ -224,7 +224,7 @@ class SalaryTelegramBot:
             user_id = str(update.effective_user.id)
 
             # Handle keyboard button presses
-            if user_input in ["📊 ခွဲခြမ်းစိတ်ဖြာမှု", "📈 ဂရပ်ပြမှု", "📋 မှတ်တမ်း", "🎯 ပန်းတိုင်", 
+            if user_input in ["📊 ခွဲခြမ်းစိတ်ဖြာမှု", "📈 ဂရပ်ပြမှု", "📋 မှတ်တမ်း", "📊 Dashboard", 
                              "📅 ပြက္ခဒိန်", "💰 လစာရက်", "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ",
                              "⏰ အချိန်သတ်မှတ်"]:
                 await self.handle_keyboard_button(update, context, user_input)
@@ -277,15 +277,15 @@ class SalaryTelegramBot:
             # Format response in Burmese
             response = self.formatter.format_salary_response(result)
 
-            # Create inline keyboard with expanded features
+            # Create inline keyboard with dashboard focus
             keyboard = [
                 [
-                    InlineKeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု", callback_data="analysis"),
+                    InlineKeyboardButton("📊 Dashboard", callback_data="dashboard"),
                     InlineKeyboardButton("📈 ဂရပ်ပြမှု", callback_data="charts")
                 ],
                 [
                     InlineKeyboardButton("📋 မှတ်တမ်း", callback_data="history"),
-                    InlineKeyboardButton("🎯 ပန်းတိုင်", callback_data="goals_menu")
+                    InlineKeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု", callback_data="analysis")
                 ],
                 [
                     InlineKeyboardButton("📤 ပို့မှု", callback_data="export_menu"),
@@ -381,54 +381,75 @@ class SalaryTelegramBot:
 
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
-            elif button_text == "🎯 ပန်းတိုင်":
-                # Show goal progress
-                progress = self.goal_tracker.check_goal_progress(user_id, 'monthly')
+            elif button_text == "📊 Dashboard":
+                # Generate comprehensive dashboard with all analysis
+                stats = self.analytics.generate_summary_stats(user_id, 30)
+                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
+                history_data = self.analytics.get_recent_history(user_id, 7)
 
-                if progress.get('error'):
-                    response = f"""🎯 **ပန်းတိုင်စီမံခန့်ခွဲမှု**
+                if stats.get('error'):
+                    response = f"""📊 **Dashboard**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-❌ **အမှားရှိသည်:** {progress['error']}
+❌ **အမှားရှိသည်:** {stats['error']}
 
-💡 **အကြံပြုချက်:**
-လစဉ်လစာပန်းတိုင် သတ်မှတ်ရန် စာတိုပေးပို့ပါ:
-`ပန်းတိုင် 300000` (လစာအတွက်)
-`ချိန်ပန်းတိုင် 180` (အလုပ်ချိန်အတွက်)
+💡 **အကြံပြုချက်:** အလုပ်ချိန်မှတ်သားပြီးမှ Dashboard ကြည့်ပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                 else:
-                    response = f"""🎯 **လစဉ်ပန်းတိုင်တိုးတက်မှု**
+                    # Create comprehensive dashboard
+                    response = f"""📊 **DASHBOARD - လစာခွဲခြမ်းစိတ်ဖြာမှု**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📅 **လ:** {progress['month']}
-📊 **အလုပ်လုပ်ရက်:** {progress['days_worked']} ရက်
+📈 **လ၀က်ဆုံး ၃၀ ရက် အခြေအနေ**
+
+📅 **အလုပ်လုပ်ရက်:** {stats['total_days']} ရက်
+⏰ **စုစုပေါင်းအလုပ်ချိန်:** {stats['total_work_hours']} နာရီ
+   🟢 ပုံမှန်နာရီ: {stats['total_regular_hours']} နာရီ  
+   🔴 OT နာရီ: {stats['total_ot_hours']} နာရီ (2625¥/နာရီ)
+
+💰 **စုစုပေါင်းလစာ:** ¥{stats['total_salary']:,.0f}
+
+📊 **နေ့စဉ်ပျမ်းမျှ:**
+   ⏰ အလုပ်ချိན်: {stats['avg_daily_hours']} နာရီ
+   💰 လစာ: ¥{stats['avg_daily_salary']:,.0f}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                    # Add charts if available
+                    if not chart_data.get('error'):
+                        hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
+                        salary_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'salary')
+                        
+                        response += f"""
+
+📈 **နောက်ဆုံး ၁၄ ရက် ဂရပ်**
+
+{hours_chart}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{salary_chart}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                    # Add recent history
+                    if not history_data.get('error'):
+                        response += f"""
+
+📋 **နောက်ဆုံး ၇ ရက် မှတ်တမ်း**
 
 """
+                        for day in history_data['history'][:5]:  # Show last 5 days
+                            response += f"📅 {day['date']}: {day['hours']}နာရီ (OT: {day['ot_hours']}နာရီ) = ¥{day['salary']:,.0f}\n"
 
-                    for goal_type, goal_data in progress.get('progress', {}).items():
-                        if goal_type == 'salary':
-                            response += f"""💰 **လစာပန်းတိုင်:**
-   🎯 ပန်းတိုင်: ¥{goal_data['target']:,.0f}
-   💵 လက်ရှိ: ¥{goal_data['current']:,.0f}
-   📈 တိုးတက်မှု: {goal_data['progress_percent']:.1f}%
-   🔄 ကျန်: ¥{goal_data['remaining']:,.0f}
-
-"""
-                        elif goal_type == 'hours':
-                            response += f"""⏰ **အလုပ်ချိန်ပန်းတိုင်:**
-   🎯 ပန်းတိုင်: {goal_data['target']} နာရီ
-   ⏱️ လက်ရှိ: {goal_data['current']:.1f} နာရီ
-   📈 တိုးတက်မှု: {goal_data['progress_percent']:.1f}%
-   🔄 ကျန်: {goal_data['remaining']:.1f} နာရီ
-
-"""
-
-                    response += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                    response += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
+
+            
 
             elif button_text == "📤 ပို့မှု":
                 # Show export options with inline buttons
@@ -742,6 +763,69 @@ class SalaryTelegramBot:
 {salary_chart}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                await query.edit_message_text(response, parse_mode='Markdown')
+
+            elif callback_data == "dashboard":
+                # Show comprehensive dashboard
+                stats = self.analytics.generate_summary_stats(user_id, 30)
+                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
+                history_data = self.analytics.get_recent_history(user_id, 7)
+
+                if stats.get('error'):
+                    response = f"""📊 **Dashboard**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ **အမှားရှိသည်:** {stats['error']}
+
+💡 **အကြံပြုချက်:** အလုပ်ချိန်မှတ်သားပြီးမှ Dashboard ကြည့်ပါ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    # Create comprehensive dashboard
+                    response = f"""📊 **DASHBOARD - လစာခွဲခြမ်းစိတ်ဖြာမှု**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📈 **လအောက်ဆုံး ၃၀ ရက် အခြေအနေ**
+
+📅 **အလုပ်လုပ်ရက်:** {stats['total_days']} ရက်
+⏰ **စုစုပေါင်းအလုပ်ချိန်:** {stats['total_work_hours']} နာရီ
+   🟢 ပုံမှန်နာရီ: {stats['total_regular_hours']} နာရီ (¥2,100/နာရီ)
+   🔴 OT နာရီ: {stats['total_ot_hours']} နာရီ (¥2,625/နာရီ)
+
+💰 **စုစုပေါင်းလစာ:** ¥{stats['total_salary']:,.0f}
+
+📊 **နေ့စဉ်ပျမ်းမျှ:**
+   ⏰ အလုပ်ချိန်: {stats['avg_daily_hours']} နာရီ
+   💰 လစာ: ¥{stats['avg_daily_salary']:,.0f}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                    # Add charts if available
+                    if not chart_data.get('error'):
+                        hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
+                        
+                        response += f"""
+
+📈 **နောက်ဆုံး ၁၄ ရက် အလုပ်ချိန်ဂရပ်**
+
+{hours_chart}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+                    # Add recent history
+                    if not history_data.get('error'):
+                        response += f"""
+
+📋 **နောက်ဆုံး ၅ ရက် မှတ်တမ်း**
+
+"""
+                        for day in history_data['history'][:5]:  # Show last 5 days
+                            response += f"📅 {day['date']}: {day['hours']}နာရီ (OT: {day['ot_hours']}နာရီ) = ¥{day['salary']:,.0f}\n"
+
+                    response += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
                 await query.edit_message_text(response, parse_mode='Markdown')
 
