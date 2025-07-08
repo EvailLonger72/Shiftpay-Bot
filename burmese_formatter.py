@@ -39,7 +39,7 @@ class BurmeseFormatter:
 ⚡ **OT နှုန်း:** 7:35 ကျော်လွန်ချက် သို့မဟုတ် ညကျော်လျှင် ¥2,625/နာရီ
 """
 
-        return response
+        return salary_breakdown
 
     def _minutes_to_hours(self, minutes: int) -> str:
         """Convert minutes to hours and minutes format."""
