@@ -46,15 +46,11 @@ class SalaryTelegramBot:
                 KeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု")
             ],
             [
-                KeyboardButton("📈 ဂရပ်ပြမှု"),
-                KeyboardButton("📋 မှတ်တမ်း")
+                KeyboardButton("📋 မှတ်တမ်း"),
+                KeyboardButton("🎯 DASHBOARD")
             ],
             [
-                KeyboardButton("📊 Dashboard"),
-                KeyboardButton("📅 ပြက္ခဒိန်")
-            ],
-            [
-                KeyboardButton("💰 လစာရက်"),
+                KeyboardButton("📅 ပြက္ခဒိန်"),
                 KeyboardButton("📤 ပို့မှု")
             ],
             [
@@ -224,8 +220,8 @@ class SalaryTelegramBot:
             user_id = str(update.effective_user.id)
 
             # Handle keyboard button presses
-            if user_input in ["📊 ခွဲခြမ်းစိတ်ဖြာမှု", "📈 ဂရပ်ပြမှု", "📋 မှတ်တမ်း", "📊 Dashboard", 
-                             "📅 ပြက္ခဒိန်", "💰 လစာရက်", "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ",
+            if user_input in ["📊 ခွဲခြမ်းစိတ်ဖြာမှု", "📋 မှတ်တမ်း", "🎯 DASHBOARD", 
+                             "📅 ပြက္ခဒိန်", "📤 ပို့မှု", "🔔 သတိပေးချက်", "🗑️ ဒေတာဖျက်မှု", "ℹ️ အကူအညီ",
                              "⏰ အချိန်သတ်မှတ်"]:
                 await self.handle_keyboard_button(update, context, user_input)
                 return
@@ -339,29 +335,6 @@ class SalaryTelegramBot:
 
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
-            elif button_text == "📈 ဂရပ်ပြမှု":
-                # Generate bar charts
-                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
-
-                if chart_data.get('error'):
-                    response = f"❌ **အမှားရှိသည်**\n\n{chart_data['error']}"
-                else:
-                    # Create hours chart
-                    hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
-                    salary_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'salary')
-
-                    response = f"""📈 **နောက်ဆုံး ၁၄ ရက် ဂရပ်**
-
-{hours_chart}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{salary_chart}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-
-                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-
             elif button_text == "📋 မှတ်တမ်း":
                 # Show recent history
                 history_data = self.analytics.get_recent_history(user_id, 7)
@@ -381,75 +354,103 @@ class SalaryTelegramBot:
 
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
-            elif button_text == "📊 Dashboard":
-                # Generate comprehensive dashboard with all analysis
+            elif button_text == "🎯 DASHBOARD":
+                # Generate enhanced dashboard with premium design
                 stats = self.analytics.generate_summary_stats(user_id, 30)
-                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
                 history_data = self.analytics.get_recent_history(user_id, 7)
 
+                # Get goal progress for dashboard
+                goal_progress = self.goal_tracker.check_goal_progress(user_id, 'monthly')
+
+                # Get work streak info
+                streak_info = self.notification_manager.get_streak_info(user_id)
+
                 if stats.get('error'):
-                    response = f"""📊 **Dashboard**
+                    response = f"""🎯 **PREMIUM DASHBOARD**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-❌ **အမှားရှိသည်:** {stats['error']}
+❌ **ဒေတာမရှိသေးပါ:** {stats['error']}
 
-💡 **အကြံပြုချက်:** အလုပ်ချိန်မှတ်သားပြီးမှ Dashboard ကြည့်ပါ
+💡 **စတင်နည်း:** အလုပ်ချိန်ပထမဆုံး ထည့်ပြီးမှ Dashboard အပြည့်အစုံ ကြည့်ရှုနိုင်ပါမည်
+
+🚀 **အချိန်ထည့်ပုံ:** 08:30 ~ 17:30 သို့မဟုတ် Set 08:30 AM To 05:30 PM
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
                 else:
-                    # Create comprehensive dashboard
-                    response = f"""📊 **DASHBOARD - လစာခွဲခြမ်းစိတ်ဖြာမှု**
+                    # Create premium dashboard design
+                    response = f"""🎯 **PREMIUM DASHBOARD**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📈 **လ၀က်ဆုံး ၃၀ ရက် အခြေအနေ**
+🏆 **လစာခွဲခြမ်းစိတ်ဖြာမှု (လ၀က်ဆုံး ၃၀ ရက်)**
 
-📅 **အလုပ်လုပ်ရက်:** {stats['total_days']} ရက်
-⏰ **စုစုပေါင်းအလုပ်ချိန်:** {stats['total_work_hours']} နာရီ
-   🟢 ပုံမှန်နာရီ: {stats['total_regular_hours']} နာရီ  
-   🔴 OT နာရီ: {stats['total_ot_hours']} နာရီ (2625¥/နာရီ)
+📊 **OVERVIEW:**
+┌─────────────────────────────────────┐
+│ 📅 အလုပ်လုပ်ရက်: {stats['total_days']:>15} ရက် │
+│ ⏰ စုစုပေါင်းချိန်: {stats['total_work_hours']:>13} နာရီ │
+│ 💰 စုစုပေါင်းလစာ: {stats['total_salary']:>10,.0f}¥ │
+│ 🔥 လက်ရှိ Streak: {streak_info.get('current_streak', 0):>14} ရက် │
+└─────────────────────────────────────┘
 
-💰 **စုစုပေါင်းလစာ:** ¥{stats['total_salary']:,.0f}
+🎯 **အလုပ်ချိန်ခွဲခြမ်းမှု:**
+┌─────────────────────────────────────┐
+│ 🟢 ပုံမှန်နာရီ: {stats['total_regular_hours']:>16} နာရီ │
+│ 🔴 OT နာရီ: {stats['total_ot_hours']:>19} နာရီ │
+│ 📈 နေ့စဉ်ပျမ်းမျှ: {stats['avg_daily_hours']:>15} နာရီ │
+│ 💸 နေ့စဉ်ပျမ်းမျှ: {stats['avg_daily_salary']:>11,.0f}¥ │
+└─────────────────────────────────────┘"""
 
-📊 **နေ့စဉ်ပျမ်းမျှ:**
-   ⏰ အလုပ်ချိན်: {stats['avg_daily_hours']} နာရီ
-   💰 လစာ: ¥{stats['avg_daily_salary']:,.0f}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-
-                    # Add charts if available
-                    if not chart_data.get('error'):
-                        hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
-                        salary_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'salary')
-                        
+                    # Add goal progress if available
+                    if not goal_progress.get('error') and goal_progress.get('progress'):
                         response += f"""
 
-📈 **နောက်ဆုံး ၁၄ ရက် ဂရပ်**
+🎯 **ပန်းတိုင်တိုးတက်မှု ({goal_progress.get('month', 'လက်ရှိလ')}):**
+┌─────────────────────────────────────┐"""
 
-{hours_chart}
+                        for goal_type, goal_data in goal_progress.get('progress', {}).items():
+                            if goal_type == 'salary':
+                                progress_bar = "█" * int(goal_data['progress_percent'] / 10) + "░" * (10 - int(goal_data['progress_percent'] / 10))
+                                response += f"""
+│ 💰 လစာပန်းတိုင်: {goal_data['progress_percent']:>15.1f}% │
+│ [{progress_bar}] │
+│ လက်ရှိ: ¥{goal_data['current']:>16,.0f} │
+│ ပန်းတိုင်: ¥{goal_data['target']:>14,.0f} │"""
+                            elif goal_type == 'hours':
+                                progress_bar = "█" * int(goal_data['progress_percent'] / 10) + "░" * (10 - int(goal_data['progress_percent'] / 10))
+                                response += f"""
+│ ⏰ ချိန်ပန်းတိုင်: {goal_data['progress_percent']:>16.1f}% │
+│ [{progress_bar}] │
+│ လက်ရှိ: {goal_data['current']:>17.1f}နာရီ │
+│ ပန်းတိုင်: {goal_data['target']:>15}နာရီ │"""
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        response += """
+└─────────────────────────────────────┘"""
 
-{salary_chart}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-
-                    # Add recent history
-                    if not history_data.get('error'):
+                    # Add recent work history
+                    if not history_data.get('error') and history_data.get('history'):
                         response += f"""
 
-📋 **နောက်ဆုံး ၇ ရက် မှတ်တမ်း**
+📋 **လုပ်ငန်းမှတ်တမ်း (နောက်ဆုံး ၅ ရက်):**
+┌─────────────────────────────────────┐"""
 
-"""
-                        for day in history_data['history'][:5]:  # Show last 5 days
-                            response += f"📅 {day['date']}: {day['hours']}နာရီ (OT: {day['ot_hours']}နာရီ) = ¥{day['salary']:,.0f}\n"
+                        for day in history_data['history'][:5]:
+                            response += f"""
+│ 📅 {day['date']}: {day['hours']:>4}နာရီ (OT:{day['ot_hours']:>3}နာရီ) = ¥{day['salary']:>6,.0f} │"""
 
-                    response += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                        response += """
+└─────────────────────────────────────┘"""
+
+                    response += f"""
+
+🚀 **DASHBOARD INSIGHTS:**
+• 🏆 အမြင့်ဆုံး Streak: {streak_info.get('longest_streak', 0)} ရက်
+• 📊 စွမ်းအားအဆင့်: {"🔥 အလွန်ကောင်း" if stats['avg_daily_hours'] >= 8.0 else "⚡ ကောင်း" if stats['avg_daily_hours'] >= 7.0 else "💪 တိုးတက်ရန်လိုအပ်"}
+• 🎯 လစဉ်ပျမ်းမျှ: {stats['total_days'] * 30 / 30:.1f} ရက်/လ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-
-            
 
             elif button_text == "📤 ပို့မှု":
                 # Show export options with inline buttons
@@ -466,7 +467,7 @@ class SalaryTelegramBot:
 ပထမဆုံး အလုပ်ချိန်မှတ်သားပြီးမှ ပို့မှုလုပ်ပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-                    
+
                     await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
                 else:
                     response = f"""📤 **ဒေတာပို့မှုမီနူး**
@@ -494,7 +495,7 @@ class SalaryTelegramBot:
                         ]
                     ]
                     export_reply_markup = InlineKeyboardMarkup(export_keyboard)
-                    
+
                     await update.message.reply_text(response, parse_mode='Markdown', reply_markup=export_reply_markup)
 
             elif button_text == "🔔 သတိပေးချက်":
@@ -568,7 +569,7 @@ class SalaryTelegramBot:
                     ]
                 ]
                 delete_reply_markup = InlineKeyboardMarkup(delete_keyboard)
-                
+
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=delete_reply_markup)
 
             elif button_text == "📅 ပြက္ခဒိန်":
@@ -608,41 +609,6 @@ class SalaryTelegramBot:
 
                     response += f"""💡 **ပွဲအစီအစဉ်ထည့်ရန်:**
 `ပွဲ 2025-07-15 အလုပ်ရှုပ်ပွဲ` ပုံစံဖြင့် ရေးပါ
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-
-                await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
-
-            elif button_text == "💰 လစာရက်":
-                # Show salary payment information
-                payment_info = self.calendar_manager.get_next_salary_payment_date()
-                schedule_suggestions = self.calendar_manager.get_work_schedule_suggestions(user_id)
-
-                response = f"""💰 **လစာထုတ်ရက်အချက်အလက်**
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📅 **နောက်လာမည့်လစာရက်:** {payment_info['burmese_date']}
-🗓️ **ကျန်ရက်:** {payment_info['days_until']} ရက်
-📊 **လစာထုတ်ရက်:** လတိုင်း {payment_info['payment_day']} ရက်
-
-"""
-
-                if schedule_suggestions.get('error'):
-                    response += f"📈 **အလုပ်အကြံပြုချက်:** {schedule_suggestions['error']}"
-                else:
-                    if schedule_suggestions.get('suggestion'):
-                        response += f"""📈 **အလုပ်အကြံပြုချက်:**
-💵 လက်ရှိလစာ: ¥{schedule_suggestions['current_month_total']:,.0f}
-🎯 ပန်းတိုင်: ¥{schedule_suggestions['target_monthly']:,.0f}
-📊 {schedule_suggestions['suggestion']}"""
-                    else:
-                        response += f"🎉 {schedule_suggestions.get('message', 'လစာရက်ရောက်ပြီ!')}"
-
-                response += f"""
-
-💡 **လစာရက်ပြောင်းရန်:**
-`လစာရက် 30` ရေးပြီး ၃၀ ရက်အဖြစ် ပြောင်းပါ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
@@ -696,7 +662,7 @@ class SalaryTelegramBot:
                     ]
                 ]
                 preset_reply_markup = InlineKeyboardMarkup(preset_keyboard)
-                
+
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=preset_reply_markup)
 
             elif button_text == "ℹ️ အကူအညီ":
@@ -704,7 +670,7 @@ class SalaryTelegramBot:
 
         except Exception as e:
             logger.error(f"Error handling keyboard button: {e}")
-            response = "❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါသည်။"
+            response = "❌ **စနစ်အမှားရှိသည်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
             await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
     async def handle_button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -738,29 +704,6 @@ class SalaryTelegramBot:
 📈 **နေ့စဉ်ပျမ်းမျှ:**
    ⏰ အလုပ်ချိန်: {stats['avg_daily_hours']} နာရီ
    💰 လစာ: ¥{stats['avg_daily_salary']:,.0f}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-
-                await query.edit_message_text(response, parse_mode='Markdown')
-
-            elif callback_data == "charts":
-                # Generate bar charts
-                chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
-
-                if chart_data.get('error'):
-                    response = f"❌ **အမှားရှိသည်**\n\n{chart_data['error']}"
-                else:
-                    # Create hours chart
-                    hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
-                    salary_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'salary')
-
-                    response = f"""📈 **နောက်ဆုံး ၁၄ ရက် ဂရပ်**
-
-{hours_chart}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{salary_chart}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
@@ -806,7 +749,7 @@ class SalaryTelegramBot:
                     # Add charts if available
                     if not chart_data.get('error'):
                         hours_chart = self.analytics.create_text_bar_chart(chart_data['chart_data'], 'hours')
-                        
+
                         response += f"""
 
 📈 **နောက်ဆုံး ၁၄ ရက် အလုပ်ချိန်ဂရပ်**
@@ -1128,7 +1071,7 @@ class SalaryTelegramBot:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ **ပြီးမြောက်မှု:** သင့်ဒေတာအားလুံး ဖျက်ပြီးပါပြီ
+✅ **ပြီးမြောက်မှု:** သင့်ဒေတာအားလုံး ဖျက်ပြီးပါပြီ
 🔄 **စနစ်အခြေအနေ:** စတင်အခြေအနေသို့ ပြန်သွားပါပြီ
 📱 **နောက်ထပ်လုပ်ရမည်:** အချိန်ထည့်ပြီး စတင်နိုင်ပါပြီ
 
@@ -1263,7 +1206,7 @@ class SalaryTelegramBot:
 
 🎯 **ပါဝင်သောအချက်အလက်များ:**
    • ရက်စွဲ, အချိန်, Shift အမျိုးအစား
-   • လုပ်ငန်းချိန်, OT ချိန်, လစာအသေးစিတ်
+   • လုပ်ငန်းချိန်, OT ချိန်, လစာအသေးစိတ်
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
 
@@ -1480,7 +1423,7 @@ class SalaryTelegramBot:
                             filename=filename,
                             caption="📊 လစာဒေတာ CSV ဖိုင် - Excel/Sheets တွင် ဖွင့်နိုင်ပါသည်"
                         )
-                    
+
                     # Clean up file
                     os.remove(filename)
                 else:
@@ -1520,7 +1463,7 @@ class SalaryTelegramBot:
                             filename=filename,
                             caption="📄 လစာဒေတာ JSON ဖိုင် - Programming applications အတွက်"
                         )
-                    
+
                     # Clean up file
                     os.remove(filename)
                 else:
@@ -1534,7 +1477,7 @@ class SalaryTelegramBot:
                 # First create analytics summary
                 stats = self.analytics.generate_summary_stats(user_id, 30)
                 chart_data = self.analytics.generate_bar_chart_data(user_id, 14)
-                
+
                 # Create comprehensive report
                 report_content = f"""လစာတွက်ချက်စက်ရုံ - အစီရင်ခံစာ
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1546,7 +1489,7 @@ class SalaryTelegramBot:
 - OT နာရီ: {stats.get('total_ot_hours', 0)} နာရီ
 - စုစုပေါင်းလစာ: ¥{stats.get('total_salary', 0):,.0f}
 - နေ့စဉ်ပျမ်းမျှအလုပ်ချိန်: {stats.get('avg_daily_hours', 0)} နာရီ
-- နေ့စဉ်ပျမ်းမျှလစာ: ¥{stats.get('avg_daily_salary', 0):,.0f}
+- နေ့စဉ်ပျမ်းမျှလစာ: ¥{stats.get('avg_daily_salary', 0)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1558,7 +1501,7 @@ class SalaryTelegramBot:
 
                 # Export data with analytics
                 csv_data = self.export_manager.export_to_csv(user_id, 30)
-                
+
                 if csv_data:
                     filename = f"salary_analytics_report_{user_id}_{datetime.now().strftime('%Y%m%d')}.txt"
                     with open(filename, 'w', encoding='utf-8') as f:
@@ -1578,7 +1521,7 @@ class SalaryTelegramBot:
                             filename=filename,
                             caption="📈 လစာခွဲခြမ်းစိတ်ဖြာမှု အစီရင်ခံစာ"
                         )
-                    
+
                     # Clean up file
                     os.remove(filename)
                 else:
@@ -1588,7 +1531,7 @@ class SalaryTelegramBot:
             elif callback_data == "delete_old_month_direct":
                 # Direct delete old month data
                 success = self.storage.delete_old_data(user_id, 30)
-                
+
                 if success:
                     response = """🗓️ **တစ်လဟောင်းဒေတာ ဖျက်ပြီးပါပြီ**
 
@@ -1596,13 +1539,13 @@ class SalaryTelegramBot:
 🔄 လက်ရှိလ ဒေတာများ ကျန်ရှိနေပါသည်"""
                 else:
                     response = "❌ ဟောင်းဒေတာဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
-                
+
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "delete_old_week_direct":
                 # Direct delete old week data
                 success = self.storage.delete_old_data(user_id, 7)
-                
+
                 if success:
                     response = """📅 **တစ်ပတ်ဟောင်းဒေတာ ဖျက်ပြီးပါပြီ**
 
@@ -1610,13 +1553,13 @@ class SalaryTelegramBot:
 🔄 ယခုပတ် ဒေတာများ ကျန်ရှိနေပါသည်"""
                 else:
                     response = "❌ ဟောင်းဒေတာဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
-                
+
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "delete_goals_direct":
                 # Direct delete goals
                 success = self.goal_tracker.delete_all_goals(user_id)
-                
+
                 if success:
                     response = """🎯 **ပန်းတိုင်များ ဖျက်ပြီးပါပြီ**
 
@@ -1624,13 +1567,13 @@ class SalaryTelegramBot:
 🔄 အလုပ်မှတ်တမ်းများ မပျက်ပါ"""
                 else:
                     response = "❌ ပန်းတိုင်ဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
-                
+
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "delete_history_direct":
                 # Direct delete work history
                 success = self.storage.delete_work_history(user_id)
-                
+
                 if success:
                     response = """📋 **အလုပ်မှတ်တမ်း ဖျက်ပြီးပါပြီ**
 
@@ -1638,7 +1581,7 @@ class SalaryTelegramBot:
 🔄 ပန်းတိုင်နှင့် ပွဲအစီအစဉ်များ မပျက်ပါ"""
                 else:
                     response = "❌ မှတ်တမ်းဖျက်ရာတွင် ပြဿနာရှိခဲ့သည်"
-                
+
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "export_then_delete_direct":
@@ -1662,12 +1605,12 @@ class SalaryTelegramBot:
             elif callback_data == "csv_then_delete_final":
                 # Export CSV then delete all
                 csv_data = self.export_manager.export_to_csv(user_id, 365)  # Get all data
-                
+
                 if csv_data:
                     filename = f"backup_before_delete_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
                     with open(filename, 'w', encoding='utf-8') as f:
                         f.write(csv_data)
-                    
+
                     # Send backup file first
                     with open(filename, 'rb') as f:
                         await context.bot.send_document(
@@ -1676,10 +1619,10 @@ class SalaryTelegramBot:
                             filename=filename,
                             caption="💾 ဒေတာ backup ဖိုင် - ဖျက်ခြင်းမတိုင်မီ သိမ်းထားပါ"
                         )
-                    
+
                     # Now delete all data
                     delete_success = self.storage.delete_user_data(user_id)
-                    
+
                     if delete_success:
                         response = """📊💥 **CSV Export ပြီး အားလုံးဖျက်မှု အောင်မြင်သည်**
 
@@ -1690,23 +1633,23 @@ class SalaryTelegramBot:
                         response = """❌ Export အောင်မြင်သော်လည်း ဖျက်မှုမအောင်မြင်
 
 💾 သင့်ဒေတာများ backup လုပ်ပြီးပါပြီ"""
-                    
+
                     # Clean up backup file
                     os.remove(filename)
                 else:
                     response = "❌ Export လုပ်ရန် ဒေတာ မတွေ့ပါ"
-                
+
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "json_then_delete_final":
                 # Export JSON then delete all
                 json_data = self.export_manager.export_to_json(user_id, 365)  # Get all data
-                
+
                 if json_data:
                     filename = f"backup_before_delete_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
                     with open(filename, 'w', encoding='utf-8') as f:
                         f.write(json_data)
-                    
+
                     # Send backup file first
                     with open(filename, 'rb') as f:
                         await context.bot.send_document(
@@ -1715,10 +1658,10 @@ class SalaryTelegramBot:
                             filename=filename,
                             caption="💾 ဒေတာ backup ဖိုင် - ဖျက်ခြင်းမတိုင်မီ သိမ်းထားပါ"
                         )
-                    
+
                     # Now delete all data
                     delete_success = self.storage.delete_user_data(user_id)
-                    
+
                     if delete_success:
                         response = """📄💥 **JSON Export ပြီး အားလုံးဖျက်မှု အောင်မြင်သည်**
 
@@ -1729,12 +1672,12 @@ class SalaryTelegramBot:
                         response = """❌ Export အောင်မြင်သော်လည်း ဖျက်မှုမအောင်မြင်
 
 💾 သင့်ဒေတာများ backup လုပ်ပြီးပါပြီ"""
-                    
+
                     # Clean up backup file
                     os.remove(filename)
                 else:
                     response = "❌ Export လုပ်ရန် ဒေတာ မတွေ့ပါ"
-                
+
                 await query.edit_message_text(response, parse_mode='Markdown')
 
             elif callback_data == "delete_all_confirm_direct":
@@ -1993,7 +1936,7 @@ class SalaryTelegramBot:
     async def handle_preset_time(self, query, context: ContextTypes.DEFAULT_TYPE, callback_data: str) -> None:
         """Handle preset time button selections."""
         user_id = str(query.from_user.id)
-        
+
         try:
             # Define preset times
             presets = {
@@ -2004,13 +1947,13 @@ class SalaryTelegramBot:
                 "preset_2to11": ("14:00", "23:00", "2PM to 11PM"),
                 "preset_10to7": ("22:00", "07:00", "10PM to 7AM")
             }
-            
+
             if callback_data not in presets:
                 await query.edit_message_text("❌ **မမှားများသောရွေးချယ်မှု**", parse_mode='Markdown')
                 return
-            
+
             start_time_str, end_time_str, preset_name = presets[callback_data]
-            
+
             # Calculate salary using the preset times
             result = self.calculator.calculate_salary(start_time_str, end_time_str)
 
@@ -2024,7 +1967,7 @@ class SalaryTelegramBot:
 
             # Format response in Burmese
             response = self.formatter.format_salary_response(result)
-            
+
             # Add preset confirmation
             response = f"""✅ **{preset_name} သတ်မှတ်မှုအောင်မြင်သည်**
 
@@ -2048,7 +1991,7 @@ class SalaryTelegramBot:
         try:
             # Parse command: "Set 08:30 AM To 05:30 PM"
             user_input = user_input.replace("Set ", "").strip()
-            
+
             # Handle shift codes
             if user_input in ["C341", "c341"]:
                 start_time_str = "08:30"
@@ -2062,7 +2005,7 @@ class SalaryTelegramBot:
                     start_part, end_part = user_input.split(" To ")
                     start_time_str = self.convert_ampm_to_24h(start_part.strip())
                     end_time_str = self.convert_ampm_to_24h(end_part.strip())
-                    
+
                     if not start_time_str or not end_time_str:
                         response = """❌ **အချိန်ပုံစံမှားနေပါသည်**
 
@@ -2097,7 +2040,7 @@ class SalaryTelegramBot:
 
             # Format response in Burmese
             response = self.formatter.format_salary_response(result)
-            
+
             # Add set time confirmation
             response = f"""✅ **အချိန်သတ်မှတ်မှုအောင်မြင်သည်**
 
@@ -2118,7 +2061,7 @@ class SalaryTelegramBot:
         """Convert AM/PM time to 24-hour format."""
         try:
             time_str = time_str.strip()
-            
+
             # If already in 24-hour format (no AM/PM), return as is
             if "AM" not in time_str.upper() and "PM" not in time_str.upper():
                 # Validate 24-hour format
@@ -2127,22 +2070,22 @@ class SalaryTelegramBot:
                     if 0 <= hour <= 23 and 0 <= minute <= 59:
                         return time_str
                 return None
-            
+
             # Parse AM/PM format
             if time_str.upper().endswith(' AM'):
                 time_part = time_str[:-3].strip()
                 hour, minute = map(int, time_part.split(':'))
-                
+
                 # Convert 12 AM to 00
                 if hour == 12:
                     hour = 0
                 elif hour > 12:
                     return None
-                    
+
             elif time_str.upper().endswith(' PM'):
                 time_part = time_str[:-3].strip()
                 hour, minute = map(int, time_part.split(':'))
-                
+
                 # Don't convert 12 PM
                 if hour != 12:
                     if hour > 12:
@@ -2150,13 +2093,13 @@ class SalaryTelegramBot:
                     hour += 12
             else:
                 return None
-            
+
             # Validate time
             if 0 <= hour <= 23 and 0 <= minute <= 59:
                 return f"{hour:02d}:{minute:02d}"
             else:
                 return None
-                
+
         except (ValueError, IndexError):
             return None
 
@@ -2172,9 +2115,9 @@ class SalaryTelegramBot:
                     filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.csv"
                     with open(filename, 'w', encoding='utf-8-sig') as f:
                         f.write(csv_data)
-                    
+
                     await update.message.reply_text("📊 CSV ဖိုင်ပြုလုပ်ပြီးပါပြီ", reply_markup=keyboard)
-                    
+
                     with open(filename, 'rb') as f:
                         await context.bot.send_document(
                             chat_id=update.message.chat_id,
@@ -2182,7 +2125,7 @@ class SalaryTelegramBot:
                             filename=filename,
                             caption="📊 လစာဒေတာ CSV ဖိုင်"
                         )
-                    
+
                     try:
                         os.remove(filename)
                     except:
@@ -2196,9 +2139,9 @@ class SalaryTelegramBot:
                     filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.json"
                     with open(filename, 'w', encoding='utf-8') as f:
                         f.write(json_data)
-                    
+
                     await update.message.reply_text("📄 JSON ဖိုင်ပြုလုပ်ပြီးပါပြီ", reply_markup=keyboard)
-                    
+
                     with open(filename, 'rb') as f:
                         await context.bot.send_document(
                             chat_id=update.message.chat_id,
@@ -2206,7 +2149,7 @@ class SalaryTelegramBot:
                             filename=filename,
                             caption="📄 လစာဒေတာ JSON ဖိုင်"
                         )
-                    
+
                     try:
                         os.remove(filename)
                     except:
@@ -2220,7 +2163,7 @@ class SalaryTelegramBot:
                     response = "✅ **အားလုံးဖျက်ပြီးပါပြီ**\n\nသင့်ဒေတာအားလုံး ဖျက်လိုက်ပါပြီ။"
                 else:
                     response = "❌ **ဖျက်မှုမအောင်မြင်**\n\nကျေးဇူးပြု၍ ထပ်မံကြိုးစားပါ။"
-                
+
                 await update.message.reply_text(response, parse_mode='Markdown', reply_markup=keyboard)
 
         except Exception as e:
