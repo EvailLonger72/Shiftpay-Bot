@@ -1,1 +1,54 @@
-{}
+{
+  "1867166899": {
+    "2025-07-08": [
+      {
+        "timestamp": "2025-07-08T06:08:33.255862",
+        "start_time": "06:20",
+        "end_time": "16:50",
+        "shift_type": "C341",
+        "total_minutes": 630,
+        "break_minutes": 85,
+        "paid_minutes": 545,
+        "regular_minutes": 455,
+        "ot_minutes": 90,
+        "night_ot_minutes": 0,
+        "total_salary": 19075.0,
+        "regular_salary": 15925.0,
+        "ot_salary": 3150.0,
+        "night_ot_salary": 0.0
+      },
+      {
+        "timestamp": "2025-07-08T06:09:10.093195",
+        "start_time": "06:20",
+        "end_time": "16:50",
+        "shift_type": "C341",
+        "total_minutes": 630,
+        "break_minutes": 85,
+        "paid_minutes": 545,
+        "regular_minutes": 455,
+        "ot_minutes": 90,
+        "night_ot_minutes": 0,
+        "total_salary": 19075.0,
+        "regular_salary": 15925.0,
+        "ot_salary": 3150.0,
+        "night_ot_salary": 0.0
+      },
+      {
+        "timestamp": "2025-07-08T06:09:31.457728",
+        "start_time": "06:20",
+        "end_time": "16:50",
+        "shift_type": "C341",
+        "total_minutes": 630,
+        "break_minutes": 85,
+        "paid_minutes": 545,
+        "regular_minutes": 455,
+        "ot_minutes": 90,
+        "night_ot_minutes": 0,
+        "total_salary": 19075.0,
+        "regular_salary": 15925.0,
+        "ot_salary": 3150.0,
+        "night_ot_salary": 0.0
+      }
+    ]
+  }
+}
