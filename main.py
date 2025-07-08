@@ -2216,7 +2216,6 @@ class SalaryTelegramBot:
 
     def run(self):
         """Run the bot."""
-```python
         logger.info("Starting Salary Calculator Telegram Bot...")
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)
 
