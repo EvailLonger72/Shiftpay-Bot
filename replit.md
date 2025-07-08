@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Telegram bot that calculates daily salary for factory workers in Myanmar. The bot automatically detects shift types (Day/Night), correctly deducts break times, and calculates wages including overtime and night overtime rates. All responses are formatted in Burmese language for local users.
+This is a comprehensive Telegram bot that calculates daily salary for factory workers in Myanmar. The bot automatically detects shift types (Day/Night), correctly deducts break times, and calculates wages including overtime and night overtime rates. The system now includes advanced features like goal tracking, data export, performance analytics, work streak monitoring, and personalized notifications. All responses are formatted in Burmese language for local users.
 
 ## System Architecture
 
@@ -12,6 +12,11 @@ This is a Telegram bot that calculates daily salary for factory workers in Myanm
 - **Shift Detector**: Identifies shift types and manages break schedules
 - **Time Utilities**: Handles time parsing and calculations
 - **Burmese Formatter**: Formats responses in Burmese language
+- **Analytics System**: Comprehensive analytics with charts and statistics
+- **Data Storage**: Persistent user data storage and management
+- **Export Manager**: CSV/JSON data export functionality
+- **Goal Tracker**: Monthly/weekly goal setting and progress tracking
+- **Notification Manager**: Work reminders and performance alerts
 
 ### Technology Stack
 - **Backend**: Python with python-telegram-bot library
@@ -111,6 +116,12 @@ This is a Telegram bot that calculates daily salary for factory workers in Myanm
 ✓ Created bar chart visualization using text characters
 ✓ Added manual data deletion functionality
 ✓ Built comprehensive summary statistics (30-day analysis)
+✓ Enhanced bot with advanced goal tracking system
+✓ Added CSV/JSON data export with file download
+✓ Implemented work streak monitoring and notifications
+✓ Created performance alerts and missing day detection
+✓ Built personalized goal recommendations system
+✓ Added monthly/weekly goal progress tracking
 
 ## Key Features Implemented
 - Automatic shift detection (C341 Day/C342 Night)
@@ -125,6 +136,13 @@ This is a Telegram bot that calculates daily salary for factory workers in Myanm
 - **Summary statistics with totals and averages**
 - **Manual data deletion with confirmation**
 - **Recent work history display (7 days)**
+- **🎯 Goal tracking for monthly/weekly salary and hours targets**
+- **📤 CSV/JSON data export with direct file download**
+- **🔔 Work reminders and performance alert notifications**
+- **🔥 Work streak tracking and consecutive day monitoring**
+- **📅 Missing work day detection with gap analysis**
+- **💡 Personalized goal recommendations based on history**
+- **📊 Advanced monthly reports with detailed breakdowns**
 
 ## User Preferences
 

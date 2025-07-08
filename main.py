@@ -7,6 +7,9 @@ from salary_calculator import SalaryCalculator
 from burmese_formatter import BurmeseFormatter
 from data_storage import DataStorage
 from analytics import Analytics
+from export_manager import ExportManager
+from notifications import NotificationManager
+from goal_tracker import GoalTracker
 
 # Configure logging
 logging.basicConfig(
@@ -22,6 +25,9 @@ class SalaryTelegramBot:
         self.formatter = BurmeseFormatter()
         self.storage = DataStorage()
         self.analytics = Analytics()
+        self.export_manager = ExportManager()
+        self.notification_manager = NotificationManager()
+        self.goal_tracker = GoalTracker()
         self.application = Application.builder().token(token).build()
         
         # Add handlers
@@ -117,7 +123,7 @@ Break များ:
             # Format response in Burmese
             response = self.formatter.format_salary_response(result)
             
-            # Create inline keyboard with analysis buttons
+            # Create inline keyboard with expanded features
             keyboard = [
                 [
                     InlineKeyboardButton("📊 ခွဲခြမ်းစိတ်ဖြာမှု", callback_data="analysis"),
@@ -125,6 +131,13 @@ Break များ:
                 ],
                 [
                     InlineKeyboardButton("📋 မှတ်တမ်း", callback_data="history"),
+                    InlineKeyboardButton("🎯 ပန်းတိုင်", callback_data="goals_menu")
+                ],
+                [
+                    InlineKeyboardButton("📤 ပို့မှု", callback_data="export_menu"),
+                    InlineKeyboardButton("🔔 သတိပေးချက်", callback_data="notifications_menu")
+                ],
+                [
                     InlineKeyboardButton("🗑️ ဒေတာဖျက်မှု", callback_data="delete_menu")
                 ]
             ]
@@ -244,8 +257,226 @@ Break များ:
                 
                 await query.edit_message_text(response, parse_mode='Markdown')
             
+            elif callback_data == "goals_menu":
+                # Show goals menu
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🎯 ပန်းတိုင်သတ်မှတ်", callback_data="set_goals"),
+                        InlineKeyboardButton("📊 တိုးတက်မှု", callback_data="goal_progress")
+                    ],
+                    [
+                        InlineKeyboardButton("🏆 အောင်မြင်မှု", callback_data="achievements"),
+                        InlineKeyboardButton("💡 အကြံပြုချက်", callback_data="goal_recommendations")
+                    ],
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="back_to_main")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                response = """🎯 **ပန်းတိုင်စီမံခန့်ခွဲမှု**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+လစာနှင့်အလုပ်ချိန်ပန်းတိုင်များ သတ်မှတ်ပြီး တိုးတက်မှုကို ခြေရာခံပါ။
+
+မည်သည့်ရွေးချယ်မှုကို လုပ်လိုပါသလဲ?"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+            
+            elif callback_data == "export_menu":
+                # Show export menu
+                keyboard = [
+                    [
+                        InlineKeyboardButton("📊 CSV ပို့မှု", callback_data="export_csv"),
+                        InlineKeyboardButton("📄 JSON ပို့မှု", callback_data="export_json")
+                    ],
+                    [
+                        InlineKeyboardButton("📅 လစဉ်အစီရင်ခံစာ", callback_data="monthly_report"),
+                        InlineKeyboardButton("ℹ️ ပို့မှုအချက်အလက်", callback_data="export_info")
+                    ],
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="back_to_main")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                response = """📤 **ဒေတာပို့မှုမီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+သင့်လစာဒေတာကို CSV သို့မဟုတ် JSON ပုံစံဖြင့် ပို့နိုင်ပါသည်။
+
+မည်သည့်ပုံစံဖြင့် ပို့လိုပါသလဲ?"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+            
+            elif callback_data == "notifications_menu":
+                # Show notifications menu
+                keyboard = [
+                    [
+                        InlineKeyboardButton("⏰ အလုပ်သတိပေးချက်", callback_data="work_reminder"),
+                        InlineKeyboardButton("⚠️ စွမ်းအားသတိပေးချက်", callback_data="performance_alert")
+                    ],
+                    [
+                        InlineKeyboardButton("🔥 အလုပ်ဆက်တိုက်", callback_data="work_streak"),
+                        InlineKeyboardButton("📅 လစ်ဟန်ရက်", callback_data="missing_days")
+                    ],
+                    [InlineKeyboardButton("🔙 ပြန်သွားမည်", callback_data="back_to_main")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                response = """🔔 **သတိပေးချက်မီနူး**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+အလုပ်ချိန်မှတ်သားရန် သတိပေးချက်များနှင့် စွမ်းအားအခြေအနေ ကြည့်ရှုပါ။
+
+မည်သည့်ရွေးချယ်မှုကို လုပ်လိုပါသလဲ?"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown', reply_markup=reply_markup)
+            
+            elif callback_data == "export_csv":
+                # Export to CSV
+                csv_data = self.export_manager.export_to_csv(user_id, 30)
+                
+                if csv_data:
+                    # Save to file and send
+                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.csv"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(csv_data)
+                    
+                    response = f"""✅ **CSV ပို့မှုအောင်မြင်သည်**
+
+📊 **ဖိုင်အမည်:** {filename}
+📅 **နောက်ဆုံး ၃၀ ရက်** ဒေတာပါဝင်ပါသည်
+
+ဖိုင်ကို သင့်ကွန်ပျူတာတွင် Excel သို့မဟုတ် Google Sheets ဖြင့် ဖွင့်နိုင်ပါသည်။"""
+                    
+                    await query.edit_message_text(response, parse_mode='Markdown')
+                    
+                    # Send file
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=query.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="📊 လစာဒေတာ CSV ဖိုင်"
+                        )
+                else:
+                    response = "❌ **ပို့မှုမအောင်မြင်**\n\nပို့ရန်ဒေတာ မတွေ့ပါ။"
+                    await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "export_json":
+                # Export to JSON
+                json_data = self.export_manager.export_to_json(user_id, 30)
+                
+                if json_data:
+                    # Save to file and send
+                    filename = f"salary_data_{user_id}_{datetime.now().strftime('%Y%m%d')}.json"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(json_data)
+                    
+                    response = f"""✅ **JSON ပို့မှုအောင်မြင်သည်**
+
+📄 **ဖိုင်အမည်:** {filename}
+📅 **နောက်ဆုံး ၃၀ ရက်** ဒေတာပါဝင်ပါသည်
+
+ဖိုင်ကို programming applications များဖြင့် အသုံးပြုနိုင်ပါသည်။"""
+                    
+                    await query.edit_message_text(response, parse_mode='Markdown')
+                    
+                    # Send file
+                    with open(filename, 'rb') as f:
+                        await context.bot.send_document(
+                            chat_id=query.message.chat_id,
+                            document=f,
+                            filename=filename,
+                            caption="📄 လစာဒေတာ JSON ဖိုင်"
+                        )
+                else:
+                    response = "❌ **ပို့မှုမအောင်မြင်**\n\nပို့ရန်ဒေတာ မတွေ့ပါ။"
+                    await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "work_streak":
+                # Show work streak information
+                streak_info = self.notification_manager.get_streak_info(user_id)
+                
+                if streak_info.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{streak_info['error']}"
+                else:
+                    response = f"""🔥 **အလုပ်ဆက်တိုက်ရက်ရေ**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔥 **လက်ရှိဆက်တိုက်:** {streak_info['current_streak']} ရက်
+🏆 **အမြင့်မားဆုံး:** {streak_info['longest_streak']} ရက်
+📅 **နောက်ဆုံးအလုပ်:** {streak_info['last_work_date'] or 'မရှိသေးပါ'}
+
+{"🎉 ဆက်လက်ကြိုးစားပါ!" if streak_info['current_streak'] > 0 else "💪 ယနေ့အလုပ်လုပ်ပြီး streak စပါ!"}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "performance_alert":
+                # Show performance alert
+                alert_info = self.notification_manager.generate_work_summary_alert(user_id)
+                
+                if alert_info.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{alert_info['error']}"
+                elif alert_info.get('alert'):
+                    response = f"""{alert_info['message']}
+
+💡 **အကြံပြုချက်များ:**
+{chr(10).join(f'• {suggestion}' for suggestion in alert_info.get('suggestions', []))}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                else:
+                    response = f"""✅ **{alert_info['message']}**
+
+🎯 သင့်အလုပ်စွမ်းအားမှာ ကောင်းမွန်နေပါသည်!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+            
+            elif callback_data == "goal_progress":
+                # Show goal progress
+                progress = self.goal_tracker.check_goal_progress(user_id, 'monthly')
+                
+                if progress.get('error'):
+                    response = f"❌ **အမှားရှိသည်**\n\n{progress['error']}"
+                else:
+                    response = f"""📊 **လစဉ်ပန်းတိုင်တိုးတက်မှု**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 **လ:** {progress['month']}
+📊 **အလုပ်လုပ်ရက်:** {progress['days_worked']} ရက်
+
+"""
+                    
+                    for goal_type, goal_data in progress.get('progress', {}).items():
+                        if goal_type == 'salary':
+                            response += f"""💰 **လစာပန်းတိုင်:**
+   🎯 ပန်းတိုင်: ¥{goal_data['target']:,.0f}
+   💵 လက်ရှိ: ¥{goal_data['current']:,.0f}
+   📈 တိုးတက်မှု: {goal_data['progress_percent']:.1f}%
+   🔄 ကျန်: ¥{goal_data['remaining']:,.0f}
+
+"""
+                        elif goal_type == 'hours':
+                            response += f"""⏰ **အလုပ်ချိန်ပန်းတိုင်:**
+   🎯 ပန်းတိုင်: {goal_data['target']} နာရီ
+   ⏱️ လက်ရှိ: {goal_data['current']:.1f} နာရီ
+   📈 တိုးတက်မှု: {goal_data['progress_percent']:.1f}%
+   🔄 ကျန်: {goal_data['remaining']:.1f} နာရီ
+
+"""
+                    
+                    response += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                await query.edit_message_text(response, parse_mode='Markdown')
+            
             elif callback_data == "back_to_main":
-                # Go back to main menu (just show a simple message)
+                # Go back to main menu
                 response = "🏠 **ပင်မစာမျက်နှာ**\n\nအချိန်ပေးပို့ပြီး လစာတွက်ချက်ပါ (ဥပမာ: 08:30 ~ 17:30)"
                 
                 await query.edit_message_text(response, parse_mode='Markdown')

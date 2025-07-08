@@ -1,0 +1,10 @@
+{
+  "test_user_456": {
+    "work_reminder": {
+      "time": "08:00",
+      "message": "မနက် ၈ နာရီ အလုပ်ချိန်!",
+      "enabled": true,
+      "created_at": "2025-07-08T06:06:44.026125"
+    }
+  }
+}

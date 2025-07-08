@@ -1,0 +1,27 @@
+{
+  "test_user_456": {
+    "monthly": {
+      "2025-07": {
+        "salary": {
+          "target": 300000,
+          "set_date": "2025-07-08T06:06:44.009714",
+          "achieved": false
+        },
+        "hours": {
+          "target": 180,
+          "set_date": "2025-07-08T06:06:44.011454",
+          "achieved": false
+        }
+      }
+    },
+    "weekly": {
+      "2025-W27": {
+        "salary": {
+          "target": 70000,
+          "set_date": "2025-07-08T06:06:44.012605",
+          "achieved": false
+        }
+      }
+    }
+  }
+}
